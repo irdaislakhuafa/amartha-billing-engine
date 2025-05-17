@@ -83,7 +83,7 @@ func (q *Queries) CreateLoan(ctx context.Context, arg CreateLoanParams) (sql.Res
 }
 
 const createLoanBilling = `-- name: CreateLoanBilling :execresult
-INSERT INTO ` + "`" + `loans_billing` + "`" + ` (
+INSERT INTO ` + "`" + `loan_billings` + "`" + ` (
   ` + "`" + `loan_transaction_id` + "`" + `, 
   ` + "`" + `bill_date` + "`" + `, 
   ` + "`" + `principal_amount` + "`" + `, 
@@ -276,7 +276,7 @@ func (q *Queries) DeleteLoan(ctx context.Context, arg DeleteLoanParams) (sql.Res
 }
 
 const deleteLoanBilling = `-- name: DeleteLoanBilling :execresult
-UPDATE ` + "`" + `loans_billing` + "`" + ` SET
+UPDATE ` + "`" + `loan_billings` + "`" + ` SET
   ` + "`" + `is_deleted` + "`" + ` = ?,
   ` + "`" + `deleted_at` + "`" + ` = ?,
   ` + "`" + `deleted_by` + "`" + ` = ?
@@ -421,12 +421,12 @@ func (q *Queries) GetLoan(ctx context.Context) (Loan, error) {
 }
 
 const getLoanBilling = `-- name: GetLoanBilling :one
-SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loans_billing` + "`" + `
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_billings` + "`" + `
 `
 
-func (q *Queries) GetLoanBilling(ctx context.Context) (LoansBilling, error) {
+func (q *Queries) GetLoanBilling(ctx context.Context) (LoanBilling, error) {
 	row := q.db.QueryRowContext(ctx, getLoanBilling)
-	var i LoansBilling
+	var i LoanBilling
 	err := row.Scan(
 		&i.ID,
 		&i.LoanTransactionID,
@@ -586,18 +586,18 @@ func (q *Queries) ListLoan(ctx context.Context) ([]Loan, error) {
 }
 
 const listLoanBilling = `-- name: ListLoanBilling :many
-SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loans_billing` + "`" + `
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_billings` + "`" + `
 `
 
-func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoansBilling, error) {
+func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoanBilling, error) {
 	rows, err := q.db.QueryContext(ctx, listLoanBilling)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []LoansBilling
+	var items []LoanBilling
 	for rows.Next() {
-		var i LoansBilling
+		var i LoanBilling
 		if err := rows.Scan(
 			&i.ID,
 			&i.LoanTransactionID,
@@ -826,7 +826,7 @@ func (q *Queries) UpdateLoan(ctx context.Context, arg UpdateLoanParams) (sql.Res
 }
 
 const updateLoanBilling = `-- name: UpdateLoanBilling :execresult
-UPDATE ` + "`" + `loans_billing` + "`" + ` SET
+UPDATE ` + "`" + `loan_billings` + "`" + ` SET
   ` + "`" + `loan_transaction_id` + "`" + ` = ?,
   ` + "`" + `bill_date` + "`" + ` = ?,
   ` + "`" + `principal_amount` + "`" + ` = ?,

@@ -116,7 +116,7 @@ WHERE `id` = ?;
 
 -- LOAN BILLING
 -- name: CreateLoanBilling :execresult
-INSERT INTO `loans_billing` (
+INSERT INTO `loan_billings` (
   `loan_transaction_id`, 
   `bill_date`, 
   `principal_amount`, 
@@ -128,13 +128,13 @@ INSERT INTO `loans_billing` (
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetLoanBilling :one
-SELECT * FROM `loans_billing`;
+SELECT * FROM `loan_billings`;
 
 -- name: ListLoanBilling :many
-SELECT * FROM `loans_billing`;
+SELECT * FROM `loan_billings`;
 
 -- name: UpdateLoanBilling :execresult
-UPDATE `loans_billing` SET
+UPDATE `loan_billings` SET
   `loan_transaction_id` = ?,
   `bill_date` = ?,
   `principal_amount` = ?,
@@ -146,7 +146,7 @@ UPDATE `loans_billing` SET
 WHERE `id` = ?;
 
 -- name: DeleteLoanBilling :execresult
-UPDATE `loans_billing` SET
+UPDATE `loan_billings` SET
   `is_deleted` = ?,
   `deleted_at` = ?,
   `deleted_by` = ?

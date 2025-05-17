@@ -30,6 +30,24 @@ type Loan struct {
 	IsDeleted         int8           `db:"is_deleted" json:"is_deleted"`
 }
 
+type LoanBilling struct {
+	ID int64 `db:"id" json:"id"`
+	// refer to loan_transactions.id
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	CreatedAt           time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy           string          `db:"created_by" json:"created_by"`
+	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
+	DeletedAt           sql.NullTime    `db:"deleted_at" json:"deleted_at"`
+	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
+	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
+}
+
 type LoanDelinquentHistory struct {
 	ID int64 `db:"id" json:"id"`
 	// refer to loan_transactions.id
@@ -79,24 +97,6 @@ type LoanTransaction struct {
 	DeletedAt sql.NullTime    `db:"deleted_at" json:"deleted_at"`
 	DeletedBy sql.NullString  `db:"deleted_by" json:"deleted_by"`
 	IsDeleted int8            `db:"is_deleted" json:"is_deleted"`
-}
-
-type LoansBilling struct {
-	ID int64 `db:"id" json:"id"`
-	// refer to loan_transactions.id
-	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
-	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
-	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
-	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
-	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
-	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
-	CreatedAt           time.Time       `db:"created_at" json:"created_at"`
-	CreatedBy           string          `db:"created_by" json:"created_by"`
-	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
-	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
-	DeletedAt           sql.NullTime    `db:"deleted_at" json:"deleted_at"`
-	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
-	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
 }
 
 type User struct {

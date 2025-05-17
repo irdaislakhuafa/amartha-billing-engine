@@ -53,7 +53,7 @@ CREATE TABLE `loan_transactions` (
 );
 
 -- loans billing
-CREATE TABLE `loans_billing` (
+CREATE TABLE `loan_billings` (
  `id` BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
  `loan_transaction_id` BIGINT NOT NULL COMMENT "refer to loan_transactions.id",
  `bill_date` DATE NOT NULL,
