@@ -1,9 +1,7 @@
 package scheduller
 
 import (
-	"context"
 	"sync"
-	"time"
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/usecase"
@@ -51,9 +49,9 @@ func (s *scheduller) Run() {
 
 func (s *scheduller) Register() {
 	// print hello world every 1 second
-	s.cron.NewJob(gocron.DurationJob(time.Second), gocron.NewTask(func() {
-		s.log.Debug(context.Background(), "Hello World")
-	}))
+	// s.cron.NewJob(gocron.DurationJob(time.Second), gocron.NewTask(func() {
+	// 	s.log.Debug(context.Background(), "Hello World")
+	// }))
 }
 
 func (s *scheduller) Close() error {

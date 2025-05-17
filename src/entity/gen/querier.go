@@ -10,11 +10,43 @@ import (
 )
 
 type Querier interface {
-	CountTodo(ctx context.Context, arg CountTodoParams) (int64, error)
-	CreateTodo(ctx context.Context, arg CreateTodoParams) (sql.Result, error)
-	GetTodo(ctx context.Context, id int64) (Todo, error)
-	ListTodo(ctx context.Context, arg ListTodoParams) ([]Todo, error)
-	UpdateTodo(ctx context.Context, arg UpdateTodoParams) (sql.Result, error)
+	CountLoan(ctx context.Context) (int64, error)
+	// LOANS
+	CreateLoan(ctx context.Context, arg CreateLoanParams) (sql.Result, error)
+	// LOAN BILLING
+	CreateLoanBilling(ctx context.Context, arg CreateLoanBillingParams) (sql.Result, error)
+	// LOAN DELINQUENT HISTORY
+	CreateLoanDelinquentHistory(ctx context.Context, arg CreateLoanDelinquentHistoryParams) (sql.Result, error)
+	// LOAN PAYMENTS
+	CreateLoanPayment(ctx context.Context, arg CreateLoanPaymentParams) (sql.Result, error)
+	// LOAN TRANSACTIONS
+	CreateLoanTransaction(ctx context.Context, arg CreateLoanTransactionParams) (sql.Result, error)
+	// USERS
+	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
+	DeleteLoan(ctx context.Context, arg DeleteLoanParams) (sql.Result, error)
+	DeleteLoanBilling(ctx context.Context, arg DeleteLoanBillingParams) (sql.Result, error)
+	DeleteLoanDelinquentHistory(ctx context.Context, arg DeleteLoanDelinquentHistoryParams) (sql.Result, error)
+	DeleteLoanPayment(ctx context.Context, arg DeleteLoanPaymentParams) (sql.Result, error)
+	DeleteLoanTransaction(ctx context.Context, arg DeleteLoanTransactionParams) (sql.Result, error)
+	DeleteUser(ctx context.Context, arg DeleteUserParams) (sql.Result, error)
+	GetLoan(ctx context.Context) (Loan, error)
+	GetLoanBilling(ctx context.Context) (LoansBilling, error)
+	GetLoanDelinquentHistory(ctx context.Context) (LoanDelinquentHistory, error)
+	GetLoanPayment(ctx context.Context) (LoanPayment, error)
+	GetLoanTransaction(ctx context.Context) (LoanTransaction, error)
+	GetUser(ctx context.Context) (User, error)
+	ListLoan(ctx context.Context) ([]Loan, error)
+	ListLoanBilling(ctx context.Context) ([]LoansBilling, error)
+	ListLoanDelinquentHistory(ctx context.Context) ([]LoanDelinquentHistory, error)
+	ListLoanPayment(ctx context.Context) ([]LoanPayment, error)
+	ListLoanTransaction(ctx context.Context) ([]LoanTransaction, error)
+	ListUser(ctx context.Context) ([]User, error)
+	UpdateLoan(ctx context.Context, arg UpdateLoanParams) (sql.Result, error)
+	UpdateLoanBilling(ctx context.Context, arg UpdateLoanBillingParams) (sql.Result, error)
+	UpdateLoanDelinquentHistory(ctx context.Context, arg UpdateLoanDelinquentHistoryParams) (sql.Result, error)
+	UpdateLoanPayment(ctx context.Context, arg UpdateLoanPaymentParams) (sql.Result, error)
+	UpdateLoanTransaction(ctx context.Context, arg UpdateLoanTransactionParams) (sql.Result, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error)
 }
 
 var _ Querier = (*Queries)(nil)
