@@ -6,18 +6,109 @@ package entitygen
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
-type Todo struct {
-	ID          int64          `db:"id" json:"id"`
-	Title       string         `db:"title" json:"title"`
-	Description string         `db:"description" json:"description"`
-	CreatedAt   time.Time      `db:"created_at" json:"created_at"`
-	CreatedBy   string         `db:"created_by" json:"created_by"`
-	UpdatedAt   sql.NullTime   `db:"updated_at" json:"updated_at"`
-	UpdatedBy   sql.NullString `db:"updated_by" json:"updated_by"`
-	DeletedAt   sql.NullTime   `db:"deleted_at" json:"deleted_at"`
-	DeletedBy   sql.NullString `db:"deleted_by" json:"deleted_by"`
-	IsDeleted   int8           `db:"is_deleted" json:"is_deleted"`
+type Loan struct {
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	Description string `db:"description" json:"description"`
+	// per annum
+	InterestRate decimal.Decimal `db:"interest_rate" json:"interest_rate"`
+	// weeks, months, years
+	RepaymentType     string         `db:"repayment_type" json:"repayment_type"`
+	RepaymentDuration int32          `db:"repayment_duration" json:"repayment_duration"`
+	CreatedAt         time.Time      `db:"created_at" json:"created_at"`
+	CreatedBy         string         `db:"created_by" json:"created_by"`
+	UpdatedAt         sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy         sql.NullString `db:"updated_by" json:"updated_by"`
+	DeletedAt         sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy         sql.NullString `db:"deleted_by" json:"deleted_by"`
+	IsDeleted         int8           `db:"is_deleted" json:"is_deleted"`
+}
+
+type LoanDelinquentHistory struct {
+	ID int64 `db:"id" json:"id"`
+	// refer to loan_transactions.id
+	LoanTransactionID int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	Bills             json.RawMessage `db:"bills" json:"bills"`
+	CreatedAt         time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy         string          `db:"created_by" json:"created_by"`
+	UpdatedAt         sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy         sql.NullString  `db:"updated_by" json:"updated_by"`
+	DeletedAt         sql.NullTime    `db:"deleted_at" json:"deleted_at"`
+	DeletedBy         sql.NullString  `db:"deleted_by" json:"deleted_by"`
+	IsDeleted         int8            `db:"is_deleted" json:"is_deleted"`
+}
+
+type LoanPayment struct {
+	ID int64 `db:"id" json:"id"`
+	// refer to loan_transactions.id
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	CreatedAt           time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy           string          `db:"created_by" json:"created_by"`
+	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
+	DeletedAt           sql.NullTime    `db:"deleted_at" json:"deleted_at"`
+	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
+	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
+}
+
+type LoanTransaction struct {
+	ID            int64  `db:"id" json:"id"`
+	InvoiceNumber string `db:"invoice_number" json:"invoice_number"`
+	Notes         string `db:"notes" json:"notes"`
+	// refer to users.id
+	UserID int64           `db:"user_id" json:"user_id"`
+	User   json.RawMessage `db:"user" json:"user"`
+	// refer to loans.id
+	LoanID    int64           `db:"loan_id" json:"loan_id"`
+	Loan      json.RawMessage `db:"loan" json:"loan"`
+	Amount    decimal.Decimal `db:"amount" json:"amount"`
+	CreatedAt time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy string          `db:"created_by" json:"created_by"`
+	UpdatedAt sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy sql.NullString  `db:"updated_by" json:"updated_by"`
+	DeletedAt sql.NullTime    `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString  `db:"deleted_by" json:"deleted_by"`
+	IsDeleted int8            `db:"is_deleted" json:"is_deleted"`
+}
+
+type LoansBilling struct {
+	ID int64 `db:"id" json:"id"`
+	// refer to loan_transactions.id
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	CreatedAt           time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy           string          `db:"created_by" json:"created_by"`
+	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
+	DeletedAt           sql.NullTime    `db:"deleted_at" json:"deleted_at"`
+	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
+	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
+}
+
+type User struct {
+	ID        int64          `db:"id" json:"id"`
+	Name      string         `db:"name" json:"name"`
+	Email     string         `db:"email" json:"email"`
+	Password  string         `db:"password" json:"password"`
+	CreatedAt time.Time      `db:"created_at" json:"created_at"`
+	CreatedBy string         `db:"created_by" json:"created_by"`
+	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
 }

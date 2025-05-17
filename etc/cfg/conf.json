@@ -36,13 +36,14 @@
   "DB": {
     "Master": {
       "Driver": "mysql",
-      "Username": "root",
-      "Password": "",
-      "Host": "127.0.0.1",
+      "User": "root",
+      "Password": "vznI6F2FKNwr0sdw",
+      "Host": "localhost",
       "Port": "3306",
-      "Name": "starter_app",
+      "Name": "amartha_billing",
       "Options": {
-        "SSLMode": "disable"
+        "SSLMode": "disable",
+        "ParseTime": true
       }
     }
   },
@@ -54,7 +55,7 @@
   },
   "Storage": {
     "StorageType": "minio",
-    "BaseDir": "starter_app",
+    "BaseDir": "amartha_billing",
     "Host": "127.0.0.1",
     "Port": "9000",
     "AccessKeyID": "",

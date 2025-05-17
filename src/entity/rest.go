@@ -78,15 +78,14 @@ func GenPagination(page, limit, totalItems int, sortBy []string) Pagination {
 
 func (p *PaginationParams) Parse() error {
 	if p.Limit == 0 {
-		p.Page = 0
 		p.Limit = 15
-	} else {
-		p.Page = (p.Page * p.Limit)
 	}
+	p.Page = (p.Page * p.Limit)
 
 	if p.OrderBy == "" {
 		p.OrderBy = "id"
 	}
+
 	if p.OrderType == "" {
 		p.OrderType = "DESC"
 	}

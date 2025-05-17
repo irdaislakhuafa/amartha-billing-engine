@@ -8,66 +8,355 @@ package entitygen
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
-const countTodo = `-- name: CountTodo :one
-SELECT
- COUNT(` + "`" + `id` + "`" + `) AS total
-FROM
- ` + "`" + `todo` + "`" + `
-WHERE
- ` + "`" + `is_deleted` + "`" + ` = ?
- AND (
-  ` + "`" + `title` + "`" + ` LIKE CONCAT('%', ? , '%') OR ` + "`" + `description` + "`" + ` LIKE CONCAT('%', ?, '%')
- )
+const countLoan = `-- name: CountLoan :one
+SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `loans` + "`" + `
 `
 
-type CountTodoParams struct {
-	IsDeleted int8        `db:"is_deleted" json:"is_deleted"`
-	CONCAT    interface{} `db:"CONCAT" json:"CONCAT"`
-	CONCAT_2  interface{} `db:"CONCAT_2" json:"CONCAT_2"`
-}
-
-func (q *Queries) CountTodo(ctx context.Context, arg CountTodoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countTodo, arg.IsDeleted, arg.CONCAT, arg.CONCAT_2)
+func (q *Queries) CountLoan(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLoan)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
 }
 
-const createTodo = `-- name: CreateTodo :execresult
-INSERT INTO ` + "`" + `todo` + "`" + ` (` + "`" + `title` + "`" + `, ` + "`" + `description` + "`" + `, ` + "`" + `created_at` + "`" + `, ` + "`" + `created_by` + "`" + `)
-VALUES (?, ?, ?, ?)
+const createLoan = `-- name: CreateLoan :execresult
+INSERT INTO ` + "`" + `loans` + "`" + ` (
+  ` + "`" + `name` + "`" + `, 
+  ` + "`" + `description` + "`" + `, 
+  ` + "`" + `interest_rate` + "`" + `, 
+  ` + "`" + `repayment_type` + "`" + `, 
+  ` + "`" + `repayment_duration` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
-type CreateTodoParams struct {
-	Title       string    `db:"title" json:"title"`
-	Description string    `db:"description" json:"description"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
-	CreatedBy   string    `db:"created_by" json:"created_by"`
+type CreateLoanParams struct {
+	Name              string          `db:"name" json:"name"`
+	Description       string          `db:"description" json:"description"`
+	InterestRate      decimal.Decimal `db:"interest_rate" json:"interest_rate"`
+	RepaymentType     string          `db:"repayment_type" json:"repayment_type"`
+	RepaymentDuration int32           `db:"repayment_duration" json:"repayment_duration"`
+	CreatedAt         time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy         string          `db:"created_by" json:"created_by"`
 }
 
-func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createTodo,
-		arg.Title,
+// LOANS
+func (q *Queries) CreateLoan(ctx context.Context, arg CreateLoanParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createLoan,
+		arg.Name,
 		arg.Description,
+		arg.InterestRate,
+		arg.RepaymentType,
+		arg.RepaymentDuration,
 		arg.CreatedAt,
 		arg.CreatedBy,
 	)
 }
 
-const getTodo = `-- name: GetTodo :one
-SELECT id, title, description, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `todo` + "`" + ` WHERE ` + "`" + `id` + "`" + ` = ?
+const createLoanBilling = `-- name: CreateLoanBilling :execresult
+INSERT INTO ` + "`" + `loans_billing` + "`" + ` (
+  ` + "`" + `loan_transaction_id` + "`" + `, 
+  ` + "`" + `bill_date` + "`" + `, 
+  ` + "`" + `principal_amount` + "`" + `, 
+  ` + "`" + `principal_amount_paid` + "`" + `, 
+  ` + "`" + `interest_amount` + "`" + `, 
+  ` + "`" + `interest_amount_paid` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
-func (q *Queries) GetTodo(ctx context.Context, id int64) (Todo, error) {
-	row := q.db.QueryRowContext(ctx, getTodo, id)
-	var i Todo
+type CreateLoanBillingParams struct {
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	CreatedAt           time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy           string          `db:"created_by" json:"created_by"`
+}
+
+// LOAN BILLING
+func (q *Queries) CreateLoanBilling(ctx context.Context, arg CreateLoanBillingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createLoanBilling,
+		arg.LoanTransactionID,
+		arg.BillDate,
+		arg.PrincipalAmount,
+		arg.PrincipalAmountPaid,
+		arg.InterestAmount,
+		arg.InterestAmountPaid,
+		arg.CreatedAt,
+		arg.CreatedBy,
+	)
+}
+
+const createLoanDelinquentHistory = `-- name: CreateLoanDelinquentHistory :execresult
+INSERT INTO ` + "`" + `loan_delinquent_histories` + "`" + ` (
+  ` + "`" + `loan_transaction_id` + "`" + `, 
+  ` + "`" + `bills` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?)
+`
+
+type CreateLoanDelinquentHistoryParams struct {
+	LoanTransactionID int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	Bills             json.RawMessage `db:"bills" json:"bills"`
+	CreatedAt         time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy         string          `db:"created_by" json:"created_by"`
+}
+
+// LOAN DELINQUENT HISTORY
+func (q *Queries) CreateLoanDelinquentHistory(ctx context.Context, arg CreateLoanDelinquentHistoryParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createLoanDelinquentHistory,
+		arg.LoanTransactionID,
+		arg.Bills,
+		arg.CreatedAt,
+		arg.CreatedBy,
+	)
+}
+
+const createLoanPayment = `-- name: CreateLoanPayment :execresult
+INSERT INTO ` + "`" + `loan_payments` + "`" + ` (
+  ` + "`" + `loan_transaction_id` + "`" + `, 
+  ` + "`" + `principal_amount` + "`" + `, 
+  ` + "`" + `principal_amount_paid` + "`" + `, 
+  ` + "`" + `interest_amount` + "`" + `, 
+  ` + "`" + `interest_amount_paid` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?, ?, ?, ?)
+`
+
+type CreateLoanPaymentParams struct {
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	CreatedAt           time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy           string          `db:"created_by" json:"created_by"`
+}
+
+// LOAN PAYMENTS
+func (q *Queries) CreateLoanPayment(ctx context.Context, arg CreateLoanPaymentParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createLoanPayment,
+		arg.LoanTransactionID,
+		arg.PrincipalAmount,
+		arg.PrincipalAmountPaid,
+		arg.InterestAmount,
+		arg.InterestAmountPaid,
+		arg.CreatedAt,
+		arg.CreatedBy,
+	)
+}
+
+const createLoanTransaction = `-- name: CreateLoanTransaction :execresult
+INSERT INTO ` + "`" + `loan_transactions` + "`" + ` (
+  ` + "`" + `invoice_number` + "`" + `, 
+  ` + "`" + `notes` + "`" + `, 
+  ` + "`" + `user_id` + "`" + `, 
+  ` + "`" + `user` + "`" + `, 
+  ` + "`" + `loan_id` + "`" + `, 
+  ` + "`" + `loan` + "`" + `, 
+  ` + "`" + `amount` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`
+
+type CreateLoanTransactionParams struct {
+	InvoiceNumber string          `db:"invoice_number" json:"invoice_number"`
+	Notes         string          `db:"notes" json:"notes"`
+	UserID        int64           `db:"user_id" json:"user_id"`
+	User          json.RawMessage `db:"user" json:"user"`
+	LoanID        int64           `db:"loan_id" json:"loan_id"`
+	Loan          json.RawMessage `db:"loan" json:"loan"`
+	Amount        decimal.Decimal `db:"amount" json:"amount"`
+	CreatedAt     time.Time       `db:"created_at" json:"created_at"`
+	CreatedBy     string          `db:"created_by" json:"created_by"`
+}
+
+// LOAN TRANSACTIONS
+func (q *Queries) CreateLoanTransaction(ctx context.Context, arg CreateLoanTransactionParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createLoanTransaction,
+		arg.InvoiceNumber,
+		arg.Notes,
+		arg.UserID,
+		arg.User,
+		arg.LoanID,
+		arg.Loan,
+		arg.Amount,
+		arg.CreatedAt,
+		arg.CreatedBy,
+	)
+}
+
+const createUser = `-- name: CreateUser :execresult
+INSERT INTO ` + "`" + `users` + "`" + ` (
+  ` + "`" + `name` + "`" + `, 
+  ` + "`" + `email` + "`" + `, 
+  ` + "`" + `password` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?, ?)
+`
+
+type CreateUserParams struct {
+	Name      string    `db:"name" json:"name"`
+	Email     string    `db:"email" json:"email"`
+	Password  string    `db:"password" json:"password"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedBy string    `db:"created_by" json:"created_by"`
+}
+
+// USERS
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createUser,
+		arg.Name,
+		arg.Email,
+		arg.Password,
+		arg.CreatedAt,
+		arg.CreatedBy,
+	)
+}
+
+const deleteLoan = `-- name: DeleteLoan :execresult
+UPDATE ` + "`" + `loans` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = ?,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteLoanParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteLoan(ctx context.Context, arg DeleteLoanParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteLoan,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
+}
+
+const deleteLoanBilling = `-- name: DeleteLoanBilling :execresult
+UPDATE ` + "`" + `loans_billing` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteLoanBillingParams struct {
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteLoanBilling(ctx context.Context, arg DeleteLoanBillingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteLoanBilling, arg.DeletedAt, arg.DeletedBy, arg.ID)
+}
+
+const deleteLoanDelinquentHistory = `-- name: DeleteLoanDelinquentHistory :execresult
+UPDATE ` + "`" + `loan_delinquent_histories` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteLoanDelinquentHistoryParams struct {
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteLoanDelinquentHistory(ctx context.Context, arg DeleteLoanDelinquentHistoryParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteLoanDelinquentHistory, arg.DeletedAt, arg.DeletedBy, arg.ID)
+}
+
+const deleteLoanPayment = `-- name: DeleteLoanPayment :execresult
+UPDATE ` + "`" + `loan_payments` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteLoanPaymentParams struct {
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteLoanPayment(ctx context.Context, arg DeleteLoanPaymentParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteLoanPayment, arg.DeletedAt, arg.DeletedBy, arg.ID)
+}
+
+const deleteLoanTransaction = `-- name: DeleteLoanTransaction :execresult
+UPDATE ` + "`" + `loan_transactions` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteLoanTransactionParams struct {
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteLoanTransaction(ctx context.Context, arg DeleteLoanTransactionParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteLoanTransaction, arg.DeletedAt, arg.DeletedBy, arg.ID)
+}
+
+const deleteUser = `-- name: DeleteUser :execresult
+UPDATE ` + "`" + `users` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteUserParams struct {
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteUser(ctx context.Context, arg DeleteUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteUser, arg.DeletedAt, arg.DeletedBy, arg.ID)
+}
+
+const getLoan = `-- name: GetLoan :one
+SELECT id, name, description, interest_rate, repayment_type, repayment_duration, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loans` + "`" + `
+`
+
+func (q *Queries) GetLoan(ctx context.Context) (Loan, error) {
+	row := q.db.QueryRowContext(ctx, getLoan)
+	var i Loan
 	err := row.Scan(
 		&i.ID,
-		&i.Title,
+		&i.Name,
 		&i.Description,
+		&i.InterestRate,
+		&i.RepaymentType,
+		&i.RepaymentDuration,
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.UpdatedAt,
@@ -79,52 +368,149 @@ func (q *Queries) GetTodo(ctx context.Context, id int64) (Todo, error) {
 	return i, err
 }
 
-const listTodo = `-- name: ListTodo :many
-SELECT id, title, description, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted
-FROM ` + "`" + `todo` + "`" + `
-WHERE
- ` + "`" + `is_deleted` + "`" + ` = ?
- AND (
-  ` + "`" + `title` + "`" + ` LIKE CONCAT('%', ? , '%') OR ` + "`" + `description` + "`" + ` LIKE CONCAT('%', ?, '%')
- )
-ORDER BY (
-  ` + "`" + `title` + "`" + ` LIKE CONCAT('%', ? , '%') OR ` + "`" + `description` + "`" + ` LIKE CONCAT('%', ?, '%')
-) DESC
-LIMIT ?
-OFFSET ?
+const getLoanBilling = `-- name: GetLoanBilling :one
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loans_billing` + "`" + `
 `
 
-type ListTodoParams struct {
-	IsDeleted int8        `db:"is_deleted" json:"is_deleted"`
-	CONCAT    interface{} `db:"CONCAT" json:"CONCAT"`
-	CONCAT_2  interface{} `db:"CONCAT_2" json:"CONCAT_2"`
-	CONCAT_3  interface{} `db:"CONCAT_3" json:"CONCAT_3"`
-	CONCAT_4  interface{} `db:"CONCAT_4" json:"CONCAT_4"`
-	Limit     int32       `db:"limit" json:"limit"`
-	Offset    int32       `db:"offset" json:"offset"`
+func (q *Queries) GetLoanBilling(ctx context.Context) (LoansBilling, error) {
+	row := q.db.QueryRowContext(ctx, getLoanBilling)
+	var i LoansBilling
+	err := row.Scan(
+		&i.ID,
+		&i.LoanTransactionID,
+		&i.BillDate,
+		&i.PrincipalAmount,
+		&i.PrincipalAmountPaid,
+		&i.InterestAmount,
+		&i.InterestAmountPaid,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+		&i.IsDeleted,
+	)
+	return i, err
 }
 
-func (q *Queries) ListTodo(ctx context.Context, arg ListTodoParams) ([]Todo, error) {
-	rows, err := q.db.QueryContext(ctx, listTodo,
-		arg.IsDeleted,
-		arg.CONCAT,
-		arg.CONCAT_2,
-		arg.CONCAT_3,
-		arg.CONCAT_4,
-		arg.Limit,
-		arg.Offset,
+const getLoanDelinquentHistory = `-- name: GetLoanDelinquentHistory :one
+SELECT id, loan_transaction_id, bills, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_delinquent_histories` + "`" + `
+`
+
+func (q *Queries) GetLoanDelinquentHistory(ctx context.Context) (LoanDelinquentHistory, error) {
+	row := q.db.QueryRowContext(ctx, getLoanDelinquentHistory)
+	var i LoanDelinquentHistory
+	err := row.Scan(
+		&i.ID,
+		&i.LoanTransactionID,
+		&i.Bills,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+		&i.IsDeleted,
 	)
+	return i, err
+}
+
+const getLoanPayment = `-- name: GetLoanPayment :one
+SELECT id, loan_transaction_id, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_payments` + "`" + `
+`
+
+func (q *Queries) GetLoanPayment(ctx context.Context) (LoanPayment, error) {
+	row := q.db.QueryRowContext(ctx, getLoanPayment)
+	var i LoanPayment
+	err := row.Scan(
+		&i.ID,
+		&i.LoanTransactionID,
+		&i.PrincipalAmount,
+		&i.PrincipalAmountPaid,
+		&i.InterestAmount,
+		&i.InterestAmountPaid,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const getLoanTransaction = `-- name: GetLoanTransaction :one
+SELECT id, invoice_number, notes, user_id, user, loan_id, loan, amount, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_transactions` + "`" + `
+`
+
+func (q *Queries) GetLoanTransaction(ctx context.Context) (LoanTransaction, error) {
+	row := q.db.QueryRowContext(ctx, getLoanTransaction)
+	var i LoanTransaction
+	err := row.Scan(
+		&i.ID,
+		&i.InvoiceNumber,
+		&i.Notes,
+		&i.UserID,
+		&i.User,
+		&i.LoanID,
+		&i.Loan,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const getUser = `-- name: GetUser :one
+SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `users` + "`" + `
+`
+
+func (q *Queries) GetUser(ctx context.Context) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const listLoan = `-- name: ListLoan :many
+SELECT id, name, description, interest_rate, repayment_type, repayment_duration, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loans` + "`" + `
+`
+
+func (q *Queries) ListLoan(ctx context.Context) ([]Loan, error) {
+	rows, err := q.db.QueryContext(ctx, listLoan)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Todo
+	var items []Loan
 	for rows.Next() {
-		var i Todo
+		var i Loan
 		if err := rows.Scan(
 			&i.ID,
-			&i.Title,
+			&i.Name,
 			&i.Description,
+			&i.InterestRate,
+			&i.RepaymentType,
+			&i.RepaymentDuration,
 			&i.CreatedAt,
 			&i.CreatedBy,
 			&i.UpdatedAt,
@@ -146,38 +532,415 @@ func (q *Queries) ListTodo(ctx context.Context, arg ListTodoParams) ([]Todo, err
 	return items, nil
 }
 
-const updateTodo = `-- name: UpdateTodo :execresult
-UPDATE ` + "`" + `todo` + "`" + ` SET
- ` + "`" + `title` + "`" + ` = ?,
- ` + "`" + `description` + "`" + ` = ?,
- ` + "`" + `updated_at` + "`" + ` = ?,
- ` + "`" + `updated_by` + "`" + ` = ?,
- ` + "`" + `deleted_at` + "`" + ` = ?,
- ` + "`" + `deleted_by` + "`" + ` = ?,
- ` + "`" + `is_deleted` + "`" + ` = ?
+const listLoanBilling = `-- name: ListLoanBilling :many
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loans_billing` + "`" + `
+`
+
+func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoansBilling, error) {
+	rows, err := q.db.QueryContext(ctx, listLoanBilling)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LoansBilling
+	for rows.Next() {
+		var i LoansBilling
+		if err := rows.Scan(
+			&i.ID,
+			&i.LoanTransactionID,
+			&i.BillDate,
+			&i.PrincipalAmount,
+			&i.PrincipalAmountPaid,
+			&i.InterestAmount,
+			&i.InterestAmountPaid,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLoanDelinquentHistory = `-- name: ListLoanDelinquentHistory :many
+SELECT id, loan_transaction_id, bills, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_delinquent_histories` + "`" + `
+`
+
+func (q *Queries) ListLoanDelinquentHistory(ctx context.Context) ([]LoanDelinquentHistory, error) {
+	rows, err := q.db.QueryContext(ctx, listLoanDelinquentHistory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LoanDelinquentHistory
+	for rows.Next() {
+		var i LoanDelinquentHistory
+		if err := rows.Scan(
+			&i.ID,
+			&i.LoanTransactionID,
+			&i.Bills,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLoanPayment = `-- name: ListLoanPayment :many
+SELECT id, loan_transaction_id, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_payments` + "`" + `
+`
+
+func (q *Queries) ListLoanPayment(ctx context.Context) ([]LoanPayment, error) {
+	rows, err := q.db.QueryContext(ctx, listLoanPayment)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LoanPayment
+	for rows.Next() {
+		var i LoanPayment
+		if err := rows.Scan(
+			&i.ID,
+			&i.LoanTransactionID,
+			&i.PrincipalAmount,
+			&i.PrincipalAmountPaid,
+			&i.InterestAmount,
+			&i.InterestAmountPaid,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLoanTransaction = `-- name: ListLoanTransaction :many
+SELECT id, invoice_number, notes, user_id, user, loan_id, loan, amount, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_transactions` + "`" + `
+`
+
+func (q *Queries) ListLoanTransaction(ctx context.Context) ([]LoanTransaction, error) {
+	rows, err := q.db.QueryContext(ctx, listLoanTransaction)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LoanTransaction
+	for rows.Next() {
+		var i LoanTransaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.InvoiceNumber,
+			&i.Notes,
+			&i.UserID,
+			&i.User,
+			&i.LoanID,
+			&i.Loan,
+			&i.Amount,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUser = `-- name: ListUser :many
+SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `users` + "`" + `
+`
+
+func (q *Queries) ListUser(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Password,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateLoan = `-- name: UpdateLoan :execresult
+UPDATE ` + "`" + `loans` + "`" + ` SET
+  ` + "`" + `name` + "`" + ` = ?,
+  ` + "`" + `description` + "`" + ` = ?,
+  ` + "`" + `interest_rate` + "`" + ` = ?,
+  ` + "`" + `repayment_type` + "`" + ` = ?,
+  ` + "`" + `repayment_duration` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
-type UpdateTodoParams struct {
-	Title       string         `db:"title" json:"title"`
-	Description string         `db:"description" json:"description"`
-	UpdatedAt   sql.NullTime   `db:"updated_at" json:"updated_at"`
-	UpdatedBy   sql.NullString `db:"updated_by" json:"updated_by"`
-	DeletedAt   sql.NullTime   `db:"deleted_at" json:"deleted_at"`
-	DeletedBy   sql.NullString `db:"deleted_by" json:"deleted_by"`
-	IsDeleted   int8           `db:"is_deleted" json:"is_deleted"`
-	ID          int64          `db:"id" json:"id"`
+type UpdateLoanParams struct {
+	Name              string          `db:"name" json:"name"`
+	Description       string          `db:"description" json:"description"`
+	InterestRate      decimal.Decimal `db:"interest_rate" json:"interest_rate"`
+	RepaymentType     string          `db:"repayment_type" json:"repayment_type"`
+	RepaymentDuration int32           `db:"repayment_duration" json:"repayment_duration"`
+	UpdatedAt         sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy         sql.NullString  `db:"updated_by" json:"updated_by"`
+	ID                int64           `db:"id" json:"id"`
 }
 
-func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateTodo,
-		arg.Title,
+func (q *Queries) UpdateLoan(ctx context.Context, arg UpdateLoanParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateLoan,
+		arg.Name,
 		arg.Description,
+		arg.InterestRate,
+		arg.RepaymentType,
+		arg.RepaymentDuration,
 		arg.UpdatedAt,
 		arg.UpdatedBy,
-		arg.DeletedAt,
-		arg.DeletedBy,
-		arg.IsDeleted,
+		arg.ID,
+	)
+}
+
+const updateLoanBilling = `-- name: UpdateLoanBilling :execresult
+UPDATE ` + "`" + `loans_billing` + "`" + ` SET
+  ` + "`" + `loan_transaction_id` + "`" + ` = ?,
+  ` + "`" + `bill_date` + "`" + ` = ?,
+  ` + "`" + `principal_amount` + "`" + ` = ?,
+  ` + "`" + `principal_amount_paid` + "`" + ` = ?,
+  ` + "`" + `interest_amount` + "`" + ` = ?,
+  ` + "`" + `interest_amount_paid` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type UpdateLoanBillingParams struct {
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
+	ID                  int64           `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLoanBilling(ctx context.Context, arg UpdateLoanBillingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateLoanBilling,
+		arg.LoanTransactionID,
+		arg.BillDate,
+		arg.PrincipalAmount,
+		arg.PrincipalAmountPaid,
+		arg.InterestAmount,
+		arg.InterestAmountPaid,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
+}
+
+const updateLoanDelinquentHistory = `-- name: UpdateLoanDelinquentHistory :execresult
+UPDATE ` + "`" + `loan_delinquent_histories` + "`" + ` SET
+  ` + "`" + `loan_transaction_id` + "`" + ` = ?,
+  ` + "`" + `bills` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type UpdateLoanDelinquentHistoryParams struct {
+	LoanTransactionID int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	Bills             json.RawMessage `db:"bills" json:"bills"`
+	UpdatedAt         sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy         sql.NullString  `db:"updated_by" json:"updated_by"`
+	ID                int64           `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLoanDelinquentHistory(ctx context.Context, arg UpdateLoanDelinquentHistoryParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateLoanDelinquentHistory,
+		arg.LoanTransactionID,
+		arg.Bills,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
+}
+
+const updateLoanPayment = `-- name: UpdateLoanPayment :execresult
+UPDATE ` + "`" + `loan_payments` + "`" + ` SET
+  ` + "`" + `loan_transaction_id` + "`" + ` = ?,
+  ` + "`" + `principal_amount` + "`" + ` = ?,
+  ` + "`" + `principal_amount_paid` + "`" + ` = ?,
+  ` + "`" + `interest_amount` + "`" + ` = ?,
+  ` + "`" + `interest_amount_paid` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type UpdateLoanPaymentParams struct {
+	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
+	ID                  int64           `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLoanPayment(ctx context.Context, arg UpdateLoanPaymentParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateLoanPayment,
+		arg.LoanTransactionID,
+		arg.PrincipalAmount,
+		arg.PrincipalAmountPaid,
+		arg.InterestAmount,
+		arg.InterestAmountPaid,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
+}
+
+const updateLoanTransaction = `-- name: UpdateLoanTransaction :execresult
+UPDATE ` + "`" + `loan_transactions` + "`" + ` SET
+  ` + "`" + `invoice_number` + "`" + ` = ?,
+  ` + "`" + `notes` + "`" + ` = ?,
+  ` + "`" + `user_id` + "`" + ` = ?,
+  ` + "`" + `user` + "`" + ` = ?,
+  ` + "`" + `loan_id` + "`" + ` = ?,
+  ` + "`" + `loan` + "`" + ` = ?,
+  ` + "`" + `amount` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type UpdateLoanTransactionParams struct {
+	InvoiceNumber string          `db:"invoice_number" json:"invoice_number"`
+	Notes         string          `db:"notes" json:"notes"`
+	UserID        int64           `db:"user_id" json:"user_id"`
+	User          json.RawMessage `db:"user" json:"user"`
+	LoanID        int64           `db:"loan_id" json:"loan_id"`
+	Loan          json.RawMessage `db:"loan" json:"loan"`
+	Amount        decimal.Decimal `db:"amount" json:"amount"`
+	UpdatedAt     sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy     sql.NullString  `db:"updated_by" json:"updated_by"`
+	ID            int64           `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateLoanTransaction(ctx context.Context, arg UpdateLoanTransactionParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateLoanTransaction,
+		arg.InvoiceNumber,
+		arg.Notes,
+		arg.UserID,
+		arg.User,
+		arg.LoanID,
+		arg.Loan,
+		arg.Amount,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
+}
+
+const updateUser = `-- name: UpdateUser :execresult
+UPDATE ` + "`" + `users` + "`" + ` SET
+  ` + "`" + `name` + "`" + ` = ?,
+  ` + "`" + `email` + "`" + ` = ?,
+  ` + "`" + `password` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type UpdateUserParams struct {
+	Name      string         `db:"name" json:"name"`
+	Email     string         `db:"email" json:"email"`
+	Password  string         `db:"password" json:"password"`
+	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUser,
+		arg.Name,
+		arg.Email,
+		arg.Password,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
 		arg.ID,
 	)
 }
