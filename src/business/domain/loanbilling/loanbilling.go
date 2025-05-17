@@ -76,7 +76,12 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanBillingParams
 
 // Delete implements Interface.
 func (i *impl) Delete(ctx context.Context, params entity.DeleteLoanBillingParams) (entity.LoanBilling, error) {
-	panic("unimplemented")
+	args := entitygen.DeleteLoanBillingParams{
+		IsDeleted: 0,
+		DeletedAt: sql.NullTime{},
+		DeletedBy: sql.NullString{},
+		ID:        0,
+	}
 }
 
 // Get implements Interface.
