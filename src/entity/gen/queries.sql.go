@@ -36,6 +36,17 @@ func (q *Queries) CountLoanBilling(ctx context.Context) (int64, error) {
 	return total, err
 }
 
+const countLoanDelinquentHistory = `-- name: CountLoanDelinquentHistory :one
+SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `loan_delinquent_histories` + "`" + `
+`
+
+func (q *Queries) CountLoanDelinquentHistory(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLoanDelinquentHistory)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const countLoanTransaction = `-- name: CountLoanTransaction :one
 SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `loan_transactions` + "`" + `
 `

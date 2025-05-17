@@ -170,6 +170,9 @@ SELECT * FROM `loan_delinquent_histories`;
 -- name: ListLoanDelinquentHistory :many
 SELECT * FROM `loan_delinquent_histories`;
 
+-- name: CountLoanDelinquentHistory :one
+SELECT COUNT(`id`) AS `total` FROM `loan_delinquent_histories`;
+
 -- name: UpdateLoanDelinquentHistory :execresult
 UPDATE `loan_delinquent_histories` SET
   `loan_transaction_id` = ?,

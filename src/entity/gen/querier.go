@@ -12,6 +12,7 @@ import (
 type Querier interface {
 	CountLoan(ctx context.Context) (int64, error)
 	CountLoanBilling(ctx context.Context) (int64, error)
+	CountLoanDelinquentHistory(ctx context.Context) (int64, error)
 	CountLoanTransaction(ctx context.Context) (int64, error)
 	CountUser(ctx context.Context) (int64, error)
 	// LOANS
