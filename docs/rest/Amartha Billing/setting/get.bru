@@ -1,0 +1,62 @@
+meta {
+  name: get
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/v1/settings/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+body:json {
+  {
+    "name": "eod_date",
+    "value": "2024-05-17"
+  }
+}
+
+docs {
+  # Request
+  ## Params
+  ```params
+  id: 1
+  ```
+  
+  # Response [200]
+  ## Body
+  ```json
+  {
+    "message": {
+      "title": "OK",
+      "body": "Request successful"
+    },
+    "meta": {
+      "path": "/api/v1/settings/1",
+      "statusCode": 200,
+      "statusStr": "OK",
+      "message": "GET http://127.0.0.1:8001/api/v1/settings/1 200 OK",
+      "timestamp": "2025-05-17T23:45:16+07:00",
+      "error": null,
+      "requestId": "f63abf7a-6ca9-4293-b187-5906d4669a3b"
+    },
+    "data": {
+      "name": "eod_date",
+      "value": "2024-05-17",
+      "id": 1,
+      "created_at": "2025-05-17T16:37:11Z",
+      "created_by": "",
+      "updated_at": "2025-05-17T16:44:32Z",
+      "updated_by": "",
+      "deleted_at": null,
+      "deleted_by": null,
+      "is_deleted": 0
+    }
+  }
+  ```
+}

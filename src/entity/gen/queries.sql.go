@@ -69,6 +69,17 @@ func (q *Queries) CountLoanTransaction(ctx context.Context) (int64, error) {
 	return total, err
 }
 
+const countSetting = `-- name: CountSetting :one
+SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `settings` + "`" + `
+`
+
+func (q *Queries) CountSetting(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countSetting)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const countUser = `-- name: CountUser :one
 SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `users` + "`" + `
 `
@@ -261,6 +272,32 @@ func (q *Queries) CreateLoanTransaction(ctx context.Context, arg CreateLoanTrans
 	)
 }
 
+const createSetting = `-- name: CreateSetting :execresult
+INSERT INTO ` + "`" + `settings` + "`" + ` (
+  ` + "`" + `name` + "`" + `, 
+  ` + "`" + `value` + "`" + `, 
+  ` + "`" + `created_at` + "`" + `, 
+  ` + "`" + `created_by` + "`" + `
+) VALUES (?, ?, ?, ?)
+`
+
+type CreateSettingParams struct {
+	Name      string    `db:"name" json:"name"`
+	Value     string    `db:"value" json:"value"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedBy string    `db:"created_by" json:"created_by"`
+}
+
+// SETTINGS
+func (q *Queries) CreateSetting(ctx context.Context, arg CreateSettingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createSetting,
+		arg.Name,
+		arg.Value,
+		arg.CreatedAt,
+		arg.CreatedBy,
+	)
+}
+
 const createUser = `-- name: CreateUser :execresult
 INSERT INTO ` + "`" + `users` + "`" + ` (
   ` + "`" + `name` + "`" + `, 
@@ -410,6 +447,30 @@ func (q *Queries) DeleteLoanTransaction(ctx context.Context, arg DeleteLoanTrans
 	)
 }
 
+const deleteSetting = `-- name: DeleteSetting :execresult
+UPDATE ` + "`" + `settings` + "`" + ` SET
+  ` + "`" + `is_deleted` + "`" + ` = ?,
+  ` + "`" + `deleted_at` + "`" + ` = ?,
+  ` + "`" + `deleted_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type DeleteSettingParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) DeleteSetting(ctx context.Context, arg DeleteSettingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteSetting,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
+}
+
 const deleteUser = `-- name: DeleteUser :execresult
 UPDATE ` + "`" + `users` + "`" + ` SET
   ` + "`" + `is_deleted` + "`" + ` = ?,
@@ -550,6 +611,28 @@ func (q *Queries) GetLoanTransaction(ctx context.Context) (LoanTransaction, erro
 		&i.LoanID,
 		&i.Loan,
 		&i.Amount,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
+		&i.UpdatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const getSetting = `-- name: GetSetting :one
+SELECT id, name, value, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `settings` + "`" + `
+`
+
+func (q *Queries) GetSetting(ctx context.Context) (Setting, error) {
+	row := q.db.QueryRowContext(ctx, getSetting)
+	var i Setting
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Value,
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.UpdatedAt,
@@ -792,6 +875,44 @@ func (q *Queries) ListLoanTransaction(ctx context.Context) ([]LoanTransaction, e
 	return items, nil
 }
 
+const listSetting = `-- name: ListSetting :many
+SELECT id, name, value, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `settings` + "`" + `
+`
+
+func (q *Queries) ListSetting(ctx context.Context) ([]Setting, error) {
+	rows, err := q.db.QueryContext(ctx, listSetting)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Setting
+	for rows.Next() {
+		var i Setting
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Value,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
+			&i.UpdatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUser = `-- name: ListUser :many
 SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, delinquent_level FROM ` + "`" + `users` + "`" + `
 `
@@ -1009,6 +1130,33 @@ func (q *Queries) UpdateLoanTransaction(ctx context.Context, arg UpdateLoanTrans
 		arg.LoanID,
 		arg.Loan,
 		arg.Amount,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
+}
+
+const updateSetting = `-- name: UpdateSetting :execresult
+UPDATE ` + "`" + `settings` + "`" + ` SET
+  ` + "`" + `name` + "`" + ` = ?,
+  ` + "`" + `value` + "`" + ` = ?,
+  ` + "`" + `updated_at` + "`" + ` = ?,
+  ` + "`" + `updated_by` + "`" + ` = ?
+WHERE ` + "`" + `id` + "`" + ` = ?
+`
+
+type UpdateSettingParams struct {
+	Name      string         `db:"name" json:"name"`
+	Value     string         `db:"value" json:"value"`
+	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
+	ID        int64          `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateSetting(ctx context.Context, arg UpdateSettingParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateSetting,
+		arg.Name,
+		arg.Value,
 		arg.UpdatedAt,
 		arg.UpdatedBy,
 		arg.ID,

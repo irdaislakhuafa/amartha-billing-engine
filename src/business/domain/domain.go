@@ -8,6 +8,7 @@ import (
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain/loandelinquenthistories"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain/loanpayment"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain/loantransaction"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain/setting"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain/user"
 	entitygen "github.com/irdaislakhuafa/amartha-billing-engine/src/entity/gen"
 	"github.com/irdaislakhuafa/go-sdk/log"
@@ -22,6 +23,7 @@ type (
 		LoanTransaction       loantransaction.Interface
 		LoanBilling           loanbilling.Interface
 		LoanDelinquentHistory loandelinquenthistories.Interface
+		Setting               setting.Interface
 	}
 )
 
@@ -33,5 +35,6 @@ func Init(log log.Interface, queries *entitygen.Queries, db *sql.DB, storage sto
 		LoanTransaction:       loantransaction.Init(log, queries),
 		LoanBilling:           loanbilling.Init(log, queries),
 		LoanDelinquentHistory: loandelinquenthistories.Init(log, queries),
+		Setting:               setting.Init(queries, log),
 	}
 }

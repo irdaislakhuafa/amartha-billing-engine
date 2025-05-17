@@ -62,6 +62,15 @@ type (
 		OSPrincipalAmount     decimal.Decimal `db:"os_principal_amount" json:"os_principal_amount"`
 		OSInterestAmount      decimal.Decimal `db:"os_interest_amount" json:"os_interest_amount"`
 		TotalOSAmount         decimal.Decimal `db:"total_os_amount" json:"total_os_amount"`
+		ListBilledBilling     []LoanBilling   `db:"list_billed_billing" json:"list_billed_billing"`
+	}
+
+	PayLoanTransactionParams struct {
+		LoanTransactionID int64 `db:"loan_transaction_id" json:"loan_transaction_id" form:"loan_transaction_id" params:"loan_transaction_id" query:"loan_transaction_id" validate:"required"`
+		// PrincipalAmount   decimal.Decimal `db:"principal_amount" json:"principal_amount" form:"principal_amount" params:"principal_amount" query:"principal_amount" validate:"required"`
+		// InterestAmount    decimal.Decimal `db:"interest_amount" json:"interest_amount" form:"interest_amount" params:"interest_amount" query:"interest_amount" validate:"required"`
+		Amount float64 `db:"amount" json:"amount" form:"amount" params:"amount" query:"amount" validate:"required,gt=0"`
+		UserID int64   `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:"required"`
 	}
 
 	LoanTransaction struct {

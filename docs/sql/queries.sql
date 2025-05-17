@@ -229,3 +229,36 @@ UPDATE `loan_payments` SET
   `deleted_at` = ?,
   `deleted_by` = ?
 WHERE `id` = ?;
+
+-- SETTINGS
+-- name: CreateSetting :execresult
+INSERT INTO `settings` (
+  `name`, 
+  `value`, 
+  `created_at`, 
+  `created_by`
+) VALUES (?, ?, ?, ?);
+
+-- name: GetSetting :one
+SELECT * FROM `settings`;
+
+-- name: ListSetting :many
+SELECT * FROM `settings`;
+
+-- name: CountSetting :one
+SELECT COUNT(`id`) AS `total` FROM `settings`;
+
+-- name: UpdateSetting :execresult
+UPDATE `settings` SET
+  `name` = ?,
+  `value` = ?,
+  `updated_at` = ?,
+  `updated_by` = ?
+WHERE `id` = ?;
+
+-- name: DeleteSetting :execresult
+UPDATE `settings` SET
+  `is_deleted` = ?,
+  `deleted_at` = ?,
+  `deleted_by` = ?
+WHERE `id` = ?;

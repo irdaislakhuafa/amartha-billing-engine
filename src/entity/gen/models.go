@@ -103,6 +103,19 @@ type LoanTransaction struct {
 	IsDeleted int8            `db:"is_deleted" json:"is_deleted"`
 }
 
+type Setting struct {
+	ID        int64          `db:"id" json:"id"`
+	Name      string         `db:"name" json:"name"`
+	Value     string         `db:"value" json:"value"`
+	CreatedAt time.Time      `db:"created_at" json:"created_at"`
+	CreatedBy string         `db:"created_by" json:"created_by"`
+	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
+	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
+}
+
 type User struct {
 	ID              int64          `db:"id" json:"id"`
 	Name            string         `db:"name" json:"name"`

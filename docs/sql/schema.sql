@@ -105,3 +105,16 @@ CREATE TABLE `loan_payments` (
 ALTER TABLE `users` ADD COLUMN `delinquent_level` INT NOT NULL DEFAULT 0 AFTER `password`;
 ALTER TABLE `loan_billings` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT "refer to users.id" AFTER `loan_transaction_id`;
 -- ALTER TABLE `loan_payments` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT "refer to users.id" AFTER `loan_transaction_id`;
+
+CREATE TABLE `settings` (
+    `id` BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `value` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `created_by` VARCHAR(255) NOT NULL,
+    `updated_at` TIMESTAMP NULL,
+    `updated_by` VARCHAR(255) NULL,
+    `deleted_at` TIMESTAMP NULL,
+    `deleted_by` VARCHAR(255) NULL,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0
+);

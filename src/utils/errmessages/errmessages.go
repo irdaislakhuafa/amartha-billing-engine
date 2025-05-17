@@ -13,4 +13,10 @@ const (
 
 	LOAN_REPAYMENT_TYPE_INVALID       = "invalid loan repayment type!"
 	LOAN_REPAYMENT_TYPE_NOT_AVAILABLE = "loan repayment type not available!"
+	LOAN_TRANSACTION_NOT_FOUND        = "loan transaction not found"
+
+	SETTING_NOT_FOUND        = "setting not found"
+	SETTING_EOD_DATE_INVALID = "setting eod date invalid"
+
+	TRANSACTION_AMOUNT_NOT_MATCH = "the amount paid does not match, amount can't be less than or greater than the outstanding amount"
 )

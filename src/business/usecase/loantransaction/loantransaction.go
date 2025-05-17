@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -26,6 +27,7 @@ type (
 		Update(ctx context.Context, params entity.UpdateLoanTransactionParams) (entity.LoanTransaction, error)
 		Delete(ctx context.Context, params entity.DeleteLoanTransactionParams) (entity.LoanTransaction, error)
 		CalculateOutstanding(ctx context.Context, params entity.CalculateOutstandingLoanTransactionParams) (entity.CalculateOutstandingLoanTransaction, error)
+		Pay(ctx context.Context, params entity.PayLoanTransactionParams) (entity.LoanTransaction, error)
 		WithTx(ctx context.Context, tx *sql.Tx) Interface
 	}
 
@@ -56,8 +58,29 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 	}
 
-	// get user
+	// get setting
 	var err error
+	var EOD_DATE time.Time
+	{
+		setting, err := i.dom.Setting.Get(ctx, entity.GetSettingParams{
+			Name:      entity.SETTING_NAME_EOD_DATE,
+			IsDeleted: 0,
+		})
+		if err != nil {
+			code := errors.GetCode(err)
+			if code.IsOneOf(codes.CodeSQLRecordDoesNotExist) {
+				return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_NOT_FOUND)
+			}
+			return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+
+		EOD_DATE, err = time.Parse(time.DateOnly, setting.Value)
+		if err != nil {
+			return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_EOD_DATE_INVALID)
+		}
+	}
+
+	// get user
 	var user entity.User
 	{
 		user, err = i.dom.User.Get(ctx, entity.GetUserParams{
@@ -126,13 +149,13 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 	listBilling := []entity.LoanBilling{}
 	switch loan.RepaymentType {
 	case entity.REPAYMENT_TYPE_WEEKS:
-		billDate := time.Now()
+		billDate := EOD_DATE
 		for i := 0; i < int(loan.RepaymentDuration); i++ {
+			billDate = billDate.AddDate(0, 0, 7)
 			listBilling = append(listBilling, entity.LoanBilling{
 				LoanTransactionID: result.ID,
-				BillDate:          billDate.AddDate(0, 0, 7),
+				BillDate:          billDate,
 			})
-			billDate = billDate.AddDate(0, 0, 7)
 		}
 	case entity.REPAYMENT_TYPE_MONTHS:
 		fallthrough
@@ -198,6 +221,20 @@ func (i *impl) CalculateOutstanding(ctx context.Context, params entity.Calculate
 		TotalOSAmount:         decimal.Decimal{},
 	}
 
+	// get setting
+	setting, err := i.dom.Setting.Get(ctx, entity.GetSettingParams{
+		Name:      entity.SETTING_NAME_EOD_DATE,
+		IsDeleted: 0,
+	})
+	if err != nil {
+		return result, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	EOD_DATE, err := time.Parse(time.DateOnly, setting.Value)
+	if err != nil {
+		return result, errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_EOD_DATE_INVALID)
+	}
+
 	// get billing
 	billings, _, err := i.dom.LoanBilling.List(ctx, entity.ListLoanBillingParams{
 		PaginationParams: entity.PaginationParams{
@@ -213,12 +250,13 @@ func (i *impl) CalculateOutstanding(ctx context.Context, params entity.Calculate
 	}
 
 	if len(billings) > 0 {
-		now := time.Now()
+		now := EOD_DATE
 		for _, b := range billings {
 			// get current billing
 			isCurrent := b.BillDate.Before(now) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
 			if isCurrent {
 				result.CurrentBillDate = &b.BillDate
+				result.ListBilledBilling = append(result.ListBilledBilling, b)
 			}
 
 			// get next billing
@@ -245,6 +283,71 @@ func (i *impl) CalculateOutstanding(ctx context.Context, params entity.Calculate
 	}
 
 	return result, nil
+}
+
+func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) (entity.LoanTransaction, error) {
+	// validate params
+	if err := i.val.StructCtx(ctx, params); err != nil {
+		err = validation.ExtractError(err, params)
+		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	// get loan transaction
+	lt, err := i.dom.LoanTransaction.Get(ctx, entity.GetLoanTransactionParams{
+		ID: params.LoanTransactionID,
+	})
+	if err != nil {
+		code := errors.GetCode(err)
+		if code.IsOneOf(codes.CodeSQLRecordDoesNotExist) {
+			return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.LOAN_TRANSACTION_NOT_FOUND)
+		}
+		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	// get billing
+	billings, _, err := i.dom.LoanBilling.List(ctx, entity.ListLoanBillingParams{
+		LoanTransactionID: params.LoanTransactionID,
+		PaginationParams: entity.PaginationParams{
+			Limit:     9_999_999,
+			Page:      0,
+			OrderBy:   "bill_date",
+			OrderType: "desc",
+		},
+		IsDeleted:              0,
+		BillDateLTE:            time.Now(),
+		PrincipalAmountPaidLTE: decimal.NewFromInt(0),
+		InterestAmountPaidLTE:  decimal.NewFromInt(0),
+	})
+	if err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	tx, err := i.db.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxBegin, err.Error())
+	}
+	defer tx.Rollback()
+
+	dLoanBilling := i.dom.LoanBilling.WithTx(ctx, tx)
+
+	// calculate amount
+	amount := decimal.NewFromFloat(params.Amount)
+	for _, b := range billings {
+		if amount.LessThanOrEqual(decimal.NewFromInt(0)) {
+			break
+		}
+		amount = amount.Sub(b.PrincipalAmount).Sub(b.InterestAmount)
+	}
+
+	// if amount not match then throw error
+	if !amount.Equal(decimal.NewFromInt(0)) {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.TRANSACTION_AMOUNT_NOT_MATCH)
+	}
+
+	fmt.Printf("dLoanBilling: %v\n", dLoanBilling)
+	fmt.Printf("lt: %v\n", lt)
+	return entity.LoanTransaction{}, nil
+
 }
 
 // Delete implements Interface.
