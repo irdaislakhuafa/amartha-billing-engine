@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/entity"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
 	"github.com/irdaislakhuafa/go-sdk/appcontext"
 	"github.com/irdaislakhuafa/go-sdk/codes"
 	"github.com/irdaislakhuafa/go-sdk/errors"

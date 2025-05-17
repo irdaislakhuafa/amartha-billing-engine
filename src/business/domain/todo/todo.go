@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/irdaislakhuafa/go-sdk-starter/src/entity"
-	entitygen "github.com/irdaislakhuafa/go-sdk-starter/src/entity/gen"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/utils/ctxkey"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
+	entitygen "github.com/irdaislakhuafa/amartha-billing-engine/src/entity/gen"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/ctxkey"
 	"github.com/irdaislakhuafa/go-sdk/codes"
 	"github.com/irdaislakhuafa/go-sdk/convert"
 	"github.com/irdaislakhuafa/go-sdk/errors"

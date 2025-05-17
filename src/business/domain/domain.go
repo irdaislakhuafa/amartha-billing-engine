@@ -3,8 +3,8 @@ package domain
 import (
 	"database/sql"
 
-	"github.com/irdaislakhuafa/go-sdk-starter/src/business/domain/todo"
-	entitygen "github.com/irdaislakhuafa/go-sdk-starter/src/entity/gen"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain/todo"
+	entitygen "github.com/irdaislakhuafa/amartha-billing-engine/src/entity/gen"
 	"github.com/irdaislakhuafa/go-sdk/log"
 	"github.com/irdaislakhuafa/go-sdk/storage"
 )

@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/business/domain"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/business/usecase/todo"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/entity"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/utils/config"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/usecase/todo"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/config"
 	"github.com/irdaislakhuafa/go-sdk/caches"
 	"github.com/irdaislakhuafa/go-sdk/log"
 	"github.com/irdaislakhuafa/go-sdk/smtp"

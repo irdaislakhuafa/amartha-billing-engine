@@ -52,7 +52,7 @@ Below is usage docs for this project.
 
 A simple way to using this project, you just need to clone this project and custom setup based on your purpose.
 ```bash
-$ git clone https://github.com/irdaislakhuafa/go-sdk-starter.git
+$ git clone https://github.com/irdaislakhuafa/amartha-billing-engine.git
 ```
 
 ### Development

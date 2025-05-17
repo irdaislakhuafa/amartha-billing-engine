@@ -1,4 +1,4 @@
-module github.com/irdaislakhuafa/go-sdk-starter
+module github.com/irdaislakhuafa/amartha-billing-engine
 
 go 1.24.0
 

@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/business/domain"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/entity"
-	entitygen "github.com/irdaislakhuafa/go-sdk-starter/src/entity/gen"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/utils/config"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/utils/validation"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
+	entitygen "github.com/irdaislakhuafa/amartha-billing-engine/src/entity/gen"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/config"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/validation"
 	"github.com/irdaislakhuafa/go-sdk/errors"
 	"github.com/irdaislakhuafa/go-sdk/log"
 )

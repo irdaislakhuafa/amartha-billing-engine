@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/business/usecase"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/utils/config"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/usecase"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/config"
 	"github.com/irdaislakhuafa/go-sdk/log"
 )
 

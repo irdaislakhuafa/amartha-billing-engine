@@ -2,7 +2,7 @@ package rest
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/irdaislakhuafa/go-sdk-starter/src/entity"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
 	"github.com/irdaislakhuafa/go-sdk/codes"
 	"github.com/irdaislakhuafa/go-sdk/errors"
 )
