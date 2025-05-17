@@ -18,12 +18,13 @@ import (
 type (
 	Interface interface {
 		Create(ctx context.Context, params entity.CreateLoanBillingParams) (entity.LoanBilling, error)
-		List(ctx context.Context, params any) ([]entity.LoanBilling, entity.Pagination, error)
+		List(ctx context.Context, params entity.ListLoanBillingParams) ([]entity.LoanBilling, entity.Pagination, error)
 		Get(ctx context.Context, params entity.GetLoanBillingParams) (entity.LoanBilling, error)
 		Update(ctx context.Context, params entity.UpdateLoanBillingParams) (entity.LoanBilling, error)
 		Delete(ctx context.Context, params entity.DeleteLoanBillingParams) (entity.LoanBilling, error)
 		WithTx(ctx context.Context, tx *sql.Tx) Interface
 	}
+
 	impl struct {
 		log     log.Interface
 		queries *entitygen.Queries
@@ -123,7 +124,88 @@ func (i *impl) Get(ctx context.Context, params entity.GetLoanBillingParams) (ent
 
 // List implements Interface.
 func (i *impl) List(ctx context.Context, params entity.ListLoanBillingParams) ([]entity.LoanBilling, entity.Pagination, error) {
-	panic("unimplemented")
+	paramsBackup := params
+	if err := params.Parse(); err != nil {
+		return []entity.LoanBilling{}, entity.Pagination{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	ctx = sqlc.Build(ctx, func(b *sqlc.Builder) {
+		b.And("is_deleted = ?", params.IsDeleted)
+		if params.LoanTransactionID != 0 {
+			b.And("loan_transaction_id = ?", params.LoanTransactionID)
+		}
+
+		if params.IsDeleted != 0 {
+			b.And("is_deleted = ?", params.IsDeleted)
+		}
+
+		if !params.BillDateGTE.IsZero() {
+			b.And("bill_date >= ?", params.BillDateGTE)
+		}
+
+		if !params.BillDateLTE.IsZero() {
+			b.And("bill_date <= ?", params.BillDateLTE)
+		}
+
+		if !params.PrincipalAmountGTE.IsZero() {
+			b.And("principal_amount >= ?", params.PrincipalAmountGTE)
+		}
+
+		if !params.PrincipalAmountLTE.IsZero() {
+			b.And("principal_amount <= ?", params.PrincipalAmountLTE)
+		}
+
+		if !params.PrincipalAmountPaidGTE.IsZero() {
+			b.And("principal_amount_paid >= ?", params.PrincipalAmountPaidGTE)
+		}
+
+		if !params.PrincipalAmountPaidLTE.IsZero() {
+			b.And("principal_amount_paid <= ?", params.PrincipalAmountPaidLTE)
+		}
+
+		if !params.InterestAmountGTE.IsZero() {
+			b.And("interest_amount >= ?", params.InterestAmountGTE)
+		}
+
+		if !params.InterestAmountLTE.IsZero() {
+			b.And("interest_amount <= ?", params.InterestAmountLTE)
+		}
+
+		if !params.InterestAmountPaidGTE.IsZero() {
+			b.And("interest_amount_paid >= ?", params.InterestAmountPaidGTE)
+		}
+
+		if !params.InterestAmountPaidLTE.IsZero() {
+			b.And("interest_amount_paid <= ?", params.InterestAmountPaidLTE)
+		}
+	})
+
+	rows, err := i.queries.ListLoanBilling(sqlc.Build(ctx, func(b *sqlc.Builder) {
+		b.Limit(params.Limit)
+		b.Offset(params.Page)
+		b.Order(params.OrderBy + " " + params.OrderType)
+	}))
+	if err != nil {
+		return []entity.LoanBilling{}, entity.Pagination{}, errors.NewWithCode(codes.CodeSQLRead, err.Error())
+	}
+
+	var results []entity.LoanBilling
+	for _, row := range rows {
+		result, err := i.rowToEntity(row)
+		if err != nil {
+			return []entity.LoanBilling{}, entity.Pagination{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+		results = append(results, result)
+	}
+
+	total, err := i.queries.CountLoanBilling(ctx)
+	if err != nil {
+		return []entity.LoanBilling{}, entity.Pagination{}, errors.NewWithCode(codes.CodeSQLRead, err.Error())
+	}
+
+	p := entity.GenPagination(paramsBackup.Page, paramsBackup.Limit, int(total), []string{paramsBackup.OrderBy, paramsBackup.OrderType})
+
+	return results, p, nil
 }
 
 // Update implements Interface.
@@ -133,7 +215,10 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateLoanBillingParams
 
 // WithTx implements Interface.
 func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
-	panic("unimplemented")
+	return &impl{
+		log:     i.log,
+		queries: i.queries.WithTx(tx),
+	}
 }
 
 func (i *impl) rowToEntity(row entitygen.LoanBilling) (entity.LoanBilling, error) {

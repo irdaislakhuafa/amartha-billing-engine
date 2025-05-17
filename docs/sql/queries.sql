@@ -133,6 +133,9 @@ SELECT * FROM `loan_billings`;
 -- name: ListLoanBilling :many
 SELECT * FROM `loan_billings`;
 
+-- name: CountLoanBilling :one
+SELECT COUNT(`id`) AS `total` FROM `loan_billings`;
+
 -- name: UpdateLoanBilling :execresult
 UPDATE `loan_billings` SET
   `loan_transaction_id` = ?,
