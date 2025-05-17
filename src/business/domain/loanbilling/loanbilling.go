@@ -210,7 +210,38 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanBillingParams) ([
 
 // Update implements Interface.
 func (i *impl) Update(ctx context.Context, params entity.UpdateLoanBillingParams) (entity.LoanBilling, error) {
-	panic("unimplemented")
+	args := entitygen.UpdateLoanBillingParams{
+		LoanTransactionID:   params.LoanTransactionID,
+		BillDate:            params.BillDate,
+		PrincipalAmount:     params.PrincipalAmount,
+		PrincipalAmountPaid: params.PrincipalAmountPaid,
+		InterestAmount:      params.InterestAmount,
+		InterestAmountPaid:  params.InterestAmountPaid,
+		UpdatedAt:           sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedBy:           sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
+		ID:                  params.ID,
+	}
+
+	_, err := i.queries.UpdateLoanBilling(ctx, args)
+	if err != nil {
+		return entity.LoanBilling{}, errors.NewWithCode(codes.CodeSQLTxExec, err.Error())
+	}
+
+	result := entity.LoanBilling{
+		LoanTransactionID:   args.LoanTransactionID,
+		BillDate:            args.BillDate,
+		PrincipalAmount:     args.PrincipalAmount,
+		PrincipalAmountPaid: args.PrincipalAmountPaid,
+		InterestAmount:      args.InterestAmount,
+		InterestAmountPaid:  args.InterestAmountPaid,
+		Base: entity.Base{
+			ID:        args.ID,
+			UpdatedAt: convert.SQLNullTimeToNil(args.UpdatedAt),
+			UpdatedBy: convert.SQLNullStringToNil(args.UpdatedBy),
+		},
+	}
+
+	return result, nil
 }
 
 // WithTx implements Interface.
@@ -222,7 +253,7 @@ func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
 }
 
 func (i *impl) rowToEntity(row entitygen.LoanBilling) (entity.LoanBilling, error) {
-	return entity.LoanBilling{
+	result := entity.LoanBilling{
 		LoanTransactionID:   row.LoanTransactionID,
 		BillDate:            row.BillDate,
 		PrincipalAmount:     row.PrincipalAmount,
@@ -239,5 +270,7 @@ func (i *impl) rowToEntity(row entitygen.LoanBilling) (entity.LoanBilling, error
 			DeletedBy: convert.SQLNullStringToNil(row.DeletedBy),
 			IsDeleted: row.IsDeleted,
 		},
-	}, nil
+	}
+
+	return result, nil
 }
