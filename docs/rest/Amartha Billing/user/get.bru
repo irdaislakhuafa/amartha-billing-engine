@@ -1,0 +1,63 @@
+meta {
+  name: get
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/v1/users/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+body:json {
+  {
+    "email": "irdaislakhafa.test@gmail.com",
+    "password": "00000000"
+  }
+}
+
+docs {
+  # Request
+  ## Params
+  ```
+  id: 1 - required
+  ```
+  
+  # Response [200]
+  ## Body
+  ```json
+  {
+    "message": {
+      "title": "OK",
+      "body": "Request successful"
+    },
+    "meta": {
+      "path": "/api/v1/users/1",
+      "statusCode": 200,
+      "statusStr": "OK",
+      "message": "GET http://127.0.0.1:8001/api/v1/users/1 200 OK",
+      "timestamp": "2025-05-17T18:41:26+07:00",
+      "error": null,
+      "requestId": "634b2fac-f798-47f1-8438-e56cf54e7f52"
+    },
+    "data": {
+      "name": "Irda Islakhu Afa",
+      "email": "irdaislakhafa.test@gmail.com",
+      "password": "",
+      "id": 1,
+      "created_at": "2025-05-17T11:23:59Z",
+      "created_by": "",
+      "updated_at": null,
+      "updated_by": null,
+      "deleted_at": null,
+      "deleted_by": null,
+      "is_deleted": 0
+    }
+  }
+  ```
+}

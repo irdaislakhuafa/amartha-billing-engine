@@ -1,0 +1,67 @@
+meta {
+  name: register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Irda Islakhu Afa",
+    "email": "irdaislakhafa.test@gmail.com",
+    "password": "00000000"
+  }
+}
+
+docs {
+  # Request
+  ## Body
+  ```json
+  {
+    "name": "Irda Islakhu Afa",
+    "email": "irdaislakhafa.test@gmail.com",
+    "password": "00000000"
+  }
+  ```
+  
+  # Response [200]
+  ## Body
+  ```json
+  {
+    "message": {
+      "title": "OK",
+      "body": "Request successful"
+    },
+    "meta": {
+      "path": "/api/v1/auth/register",
+      "statusCode": 200,
+      "statusStr": "OK",
+      "message": "POST http://127.0.0.1:8001/api/v1/auth/register 200 OK",
+      "timestamp": "2025-05-17T18:23:58+07:00",
+      "error": null,
+      "requestId": "c548a563-edd1-40ec-b68b-6b90ebac1182"
+    },
+    "data": {
+      "message": "user register successfully",
+      "user": {
+        "name": "Irda Islakhu Afa",
+        "email": "irdaislakhafa.test@gmail.com",
+        "password": "",
+        "id": 1,
+        "created_at": "2025-05-17T18:23:58.80660025+07:00",
+        "created_by": "",
+        "updated_at": null,
+        "updated_by": null,
+        "deleted_at": null,
+        "deleted_by": null,
+        "is_deleted": 0
+      }
+    }
+  }
+  ```
+}

@@ -69,7 +69,8 @@
     "Dir": ""
   },
   "Token": {
-    "ExpirationMinutes": 43200
+    "ExpirationMinutes": 43200,
+    "Secret": "awokawokawok"
   },
   "Contacts": {
     "Name": "",

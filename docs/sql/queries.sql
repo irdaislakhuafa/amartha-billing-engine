@@ -53,18 +53,20 @@ SELECT * FROM `users`;
 -- name: ListUser :many
 SELECT * FROM `users`;
 
+-- name: CountUser :one
+SELECT COUNT(`id`) AS `total` FROM `users`;
+
 -- name: UpdateUser :execresult
 UPDATE `users` SET
   `name` = ?,
   `email` = ?,
-  `password` = ?,
   `updated_at` = ?,
   `updated_by` = ?
 WHERE `id` = ?;
 
 -- name: DeleteUser :execresult
 UPDATE `users` SET
-  `is_deleted` = 1,
+  `is_deleted` = ?,
   `deleted_at` = ?,
   `deleted_by` = ?
 WHERE `id` = ?;

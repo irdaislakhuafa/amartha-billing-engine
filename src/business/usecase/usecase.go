@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/domain"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/usecase/loan"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/business/usecase/user"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/config"
 	"github.com/irdaislakhuafa/go-sdk/caches"
@@ -17,6 +18,7 @@ import (
 type (
 	Usecase struct {
 		Loan loan.Interface
+		User user.Interface
 	}
 )
 
@@ -32,5 +34,6 @@ func Init(
 ) *Usecase {
 	return &Usecase{
 		Loan: loan.Init(cfg, log, val, db, dom),
+		User: user.Init(log, db, dom, val, cfg),
 	}
 }

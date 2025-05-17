@@ -51,6 +51,7 @@ type (
 
 	Token struct {
 		ExpirationMinutes int
+		Secret            string
 	}
 
 	Contacts struct {

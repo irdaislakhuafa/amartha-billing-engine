@@ -25,6 +25,17 @@ func (q *Queries) CountLoan(ctx context.Context) (int64, error) {
 	return total, err
 }
 
+const countUser = `-- name: CountUser :one
+SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `users` + "`" + `
+`
+
+func (q *Queries) CountUser(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUser)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const createLoan = `-- name: CreateLoan :execresult
 INSERT INTO ` + "`" + `loans` + "`" + ` (
   ` + "`" + `name` + "`" + `, 
@@ -327,20 +338,26 @@ func (q *Queries) DeleteLoanTransaction(ctx context.Context, arg DeleteLoanTrans
 
 const deleteUser = `-- name: DeleteUser :execresult
 UPDATE ` + "`" + `users` + "`" + ` SET
-  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `is_deleted` + "`" + ` = ?,
   ` + "`" + `deleted_at` + "`" + ` = ?,
   ` + "`" + `deleted_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type DeleteUserParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
 	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
 	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
 	ID        int64          `db:"id" json:"id"`
 }
 
 func (q *Queries) DeleteUser(ctx context.Context, arg DeleteUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteUser, arg.DeletedAt, arg.DeletedBy, arg.ID)
+	return q.db.ExecContext(ctx, deleteUser,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
 }
 
 const getLoan = `-- name: GetLoan :one
@@ -919,7 +936,6 @@ const updateUser = `-- name: UpdateUser :execresult
 UPDATE ` + "`" + `users` + "`" + ` SET
   ` + "`" + `name` + "`" + ` = ?,
   ` + "`" + `email` + "`" + ` = ?,
-  ` + "`" + `password` + "`" + ` = ?,
   ` + "`" + `updated_at` + "`" + ` = ?,
   ` + "`" + `updated_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
@@ -928,7 +944,6 @@ WHERE ` + "`" + `id` + "`" + ` = ?
 type UpdateUserParams struct {
 	Name      string         `db:"name" json:"name"`
 	Email     string         `db:"email" json:"email"`
-	Password  string         `db:"password" json:"password"`
 	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
 	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
 	ID        int64          `db:"id" json:"id"`
@@ -938,7 +953,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Res
 	return q.db.ExecContext(ctx, updateUser,
 		arg.Name,
 		arg.Email,
-		arg.Password,
 		arg.UpdatedAt,
 		arg.UpdatedBy,
 		arg.ID,

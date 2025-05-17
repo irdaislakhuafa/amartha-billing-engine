@@ -5,16 +5,18 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/v1/loans?search=50&ids=1&page=0&limit=15
+  url: {{base_url}}/api/v1/loans?search=50&ids=1,2&page=0&limit=15&order_by=id&order_type=desc
   body: none
   auth: none
 }
 
 params:query {
   search: 50
-  ids: 1
+  ids: 1,2
   page: 0
   limit: 15
+  order_by: id
+  order_type: desc
 }
 
 body:json {
@@ -31,9 +33,11 @@ docs {
   ## Queries
   ```query
   search: 50 - optional
-  ids: 1 - optional
+  ids: 1,2 - optional
   page: 0 - optional
   limit: 15 - optional
+  order_by: id - optional
+  order_type: desc - optional
   ```
   
   # Response [200]

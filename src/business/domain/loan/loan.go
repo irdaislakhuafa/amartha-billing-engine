@@ -103,16 +103,16 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanParams) ([]entity
 
 		if params.Search != "" {
 			params.Search = "%" + params.Search + "%"
-			b.Where("name LIKE ?", params.Search)
+			b.Where("(name LIKE ? OR description LIKE ?)", params.Search, params.Search)
 		}
 
 		b.And("is_deleted = ?", params.IsDeleted)
-		b.Order(params.OrderBy + " " + params.OrderType)
 	})
 
 	rows, err := i.queries.ListLoan(sqlc.Build(ctx, func(b *sqlc.Builder) {
 		b.Limit(params.Limit)
 		b.Offset(params.Page)
+		b.Order(params.OrderBy + " " + params.OrderType)
 	}))
 	if err != nil {
 		return []entity.Loan{}, entity.Pagination{}, errors.NewWithCode(codes.CodeSQLRead, err.Error())
