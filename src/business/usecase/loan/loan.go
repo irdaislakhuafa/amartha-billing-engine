@@ -138,6 +138,7 @@ func (i *impl) Delete(ctx context.Context, params entity.DeleteLoanParams) (enti
 
 	prev.DeletedAt = del.DeletedAt
 	prev.DeletedBy = del.DeletedBy
+	prev.IsDeleted = del.IsDeleted
 
 	return prev, nil
 }

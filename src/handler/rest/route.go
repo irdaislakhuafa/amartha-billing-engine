@@ -11,6 +11,6 @@ func (r *rest) RegisterRoutes() {
 		v1.Post("/loans", r.CreateLoan)
 		v1.Put("/loans", r.UpdateLoan)
 		v1.Get("/loans/:id", r.GetLoan)
-		v1.Delete("/loans/:id", r.DeleteLoan)
+		v1.Delete("/loans/:id/:is_deleted", r.DeleteLoan)
 	}
 }

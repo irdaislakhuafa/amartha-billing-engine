@@ -20,7 +20,8 @@ type (
 	}
 
 	GetLoanParams struct {
-		ID int64 `db:"id" json:"id" form:"id" query:"id" params:"id" validate:"required"`
+		ID        int64 `db:"id" json:"id" form:"id" query:"id" params:"id" validate:"required"`
+		IsDeleted int   `db:"is_deleted" form:"is_deleted" query:"id" params:"id" validate:""`
 	}
 
 	UpdateLoanParams struct {

@@ -140,6 +140,7 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanParams) ([]entity
 func (i *impl) Get(ctx context.Context, params entity.GetLoanParams) (entity.Loan, error) {
 	ctx = sqlc.Build(ctx, func(b *sqlc.Builder) {
 		b.And("id = ?", params.ID)
+		b.And("is_deleted = ?", params.IsDeleted)
 	})
 
 	row, err := i.queries.GetLoan(ctx)
