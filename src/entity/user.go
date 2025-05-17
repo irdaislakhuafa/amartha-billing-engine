@@ -38,9 +38,10 @@ type (
 	}
 
 	User struct {
-		Name     string `db:"name" json:"name"`
-		Email    string `db:"email" json:"email"`
-		Password string `db:"password" json:"password"`
+		Name            string `db:"name" json:"name"`
+		Email           string `db:"email" json:"email"`
+		Password        string `db:"password" json:"password"`
+		DelinquentLevel int    `db:"delinquent_level" json:"delinquent_level"`
 		Base
 	}
 )

@@ -25,6 +25,17 @@ func (q *Queries) CountLoan(ctx context.Context) (int64, error) {
 	return total, err
 }
 
+const countLoanTransaction = `-- name: CountLoanTransaction :one
+SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `loan_transactions` + "`" + `
+`
+
+func (q *Queries) CountLoanTransaction(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLoanTransaction)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const countUser = `-- name: CountUser :one
 SELECT COUNT(` + "`" + `id` + "`" + `) AS ` + "`" + `total` + "`" + ` FROM ` + "`" + `users` + "`" + `
 `
@@ -266,74 +277,98 @@ func (q *Queries) DeleteLoan(ctx context.Context, arg DeleteLoanParams) (sql.Res
 
 const deleteLoanBilling = `-- name: DeleteLoanBilling :execresult
 UPDATE ` + "`" + `loans_billing` + "`" + ` SET
-  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `is_deleted` + "`" + ` = ?,
   ` + "`" + `deleted_at` + "`" + ` = ?,
   ` + "`" + `deleted_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type DeleteLoanBillingParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
 	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
 	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
 	ID        int64          `db:"id" json:"id"`
 }
 
 func (q *Queries) DeleteLoanBilling(ctx context.Context, arg DeleteLoanBillingParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteLoanBilling, arg.DeletedAt, arg.DeletedBy, arg.ID)
+	return q.db.ExecContext(ctx, deleteLoanBilling,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
 }
 
 const deleteLoanDelinquentHistory = `-- name: DeleteLoanDelinquentHistory :execresult
 UPDATE ` + "`" + `loan_delinquent_histories` + "`" + ` SET
-  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `is_deleted` + "`" + ` = ?,
   ` + "`" + `deleted_at` + "`" + ` = ?,
   ` + "`" + `deleted_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type DeleteLoanDelinquentHistoryParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
 	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
 	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
 	ID        int64          `db:"id" json:"id"`
 }
 
 func (q *Queries) DeleteLoanDelinquentHistory(ctx context.Context, arg DeleteLoanDelinquentHistoryParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteLoanDelinquentHistory, arg.DeletedAt, arg.DeletedBy, arg.ID)
+	return q.db.ExecContext(ctx, deleteLoanDelinquentHistory,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
 }
 
 const deleteLoanPayment = `-- name: DeleteLoanPayment :execresult
 UPDATE ` + "`" + `loan_payments` + "`" + ` SET
-  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `is_deleted` + "`" + ` = ?,
   ` + "`" + `deleted_at` + "`" + ` = ?,
   ` + "`" + `deleted_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type DeleteLoanPaymentParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
 	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
 	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
 	ID        int64          `db:"id" json:"id"`
 }
 
 func (q *Queries) DeleteLoanPayment(ctx context.Context, arg DeleteLoanPaymentParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteLoanPayment, arg.DeletedAt, arg.DeletedBy, arg.ID)
+	return q.db.ExecContext(ctx, deleteLoanPayment,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
 }
 
 const deleteLoanTransaction = `-- name: DeleteLoanTransaction :execresult
 UPDATE ` + "`" + `loan_transactions` + "`" + ` SET
-  ` + "`" + `is_deleted` + "`" + ` = 1,
+  ` + "`" + `is_deleted` + "`" + ` = ?,
   ` + "`" + `deleted_at` + "`" + ` = ?,
   ` + "`" + `deleted_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type DeleteLoanTransactionParams struct {
+	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
 	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
 	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
 	ID        int64          `db:"id" json:"id"`
 }
 
 func (q *Queries) DeleteLoanTransaction(ctx context.Context, arg DeleteLoanTransactionParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteLoanTransaction, arg.DeletedAt, arg.DeletedBy, arg.ID)
+	return q.db.ExecContext(ctx, deleteLoanTransaction,
+		arg.IsDeleted,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.ID,
+	)
 }
 
 const deleteUser = `-- name: DeleteUser :execresult
@@ -486,7 +521,7 @@ func (q *Queries) GetLoanTransaction(ctx context.Context) (LoanTransaction, erro
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `users` + "`" + `
+SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, delinquent_level FROM ` + "`" + `users` + "`" + `
 `
 
 func (q *Queries) GetUser(ctx context.Context) (User, error) {
@@ -504,6 +539,7 @@ func (q *Queries) GetUser(ctx context.Context) (User, error) {
 		&i.DeletedAt,
 		&i.DeletedBy,
 		&i.IsDeleted,
+		&i.DelinquentLevel,
 	)
 	return i, err
 }
@@ -714,7 +750,7 @@ func (q *Queries) ListLoanTransaction(ctx context.Context) ([]LoanTransaction, e
 }
 
 const listUser = `-- name: ListUser :many
-SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `users` + "`" + `
+SELECT id, name, email, password, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, delinquent_level FROM ` + "`" + `users` + "`" + `
 `
 
 func (q *Queries) ListUser(ctx context.Context) ([]User, error) {
@@ -738,6 +774,7 @@ func (q *Queries) ListUser(ctx context.Context) ([]User, error) {
 			&i.DeletedAt,
 			&i.DeletedBy,
 			&i.IsDeleted,
+			&i.DelinquentLevel,
 		); err != nil {
 			return nil, err
 		}

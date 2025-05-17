@@ -128,7 +128,7 @@ func (i *impl) List(ctx context.Context, params entity.ListUserParams) ([]entity
 		return []entity.User{}, entity.Pagination{}, errors.NewWithCode(codes.CodeSQLRead, err.Error())
 	}
 
-	p := entity.GenPagination(paramsBackup.Page, params.Limit, int(total), []string{params.OrderBy, params.OrderType})
+	p := entity.GenPagination(paramsBackup.Page, paramsBackup.Limit, int(total), []string{params.OrderBy, params.OrderType})
 
 	return results, p, nil
 }

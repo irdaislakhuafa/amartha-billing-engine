@@ -91,6 +91,9 @@ SELECT * FROM `loan_transactions`;
 -- name: ListLoanTransaction :many
 SELECT * FROM `loan_transactions`;
 
+-- name: CountLoanTransaction :one
+SELECT COUNT(`id`) AS `total` FROM `loan_transactions`;
+
 -- name: UpdateLoanTransaction :execresult
 UPDATE `loan_transactions` SET
   `invoice_number` = ?,
@@ -106,7 +109,7 @@ WHERE `id` = ?;
 
 -- name: DeleteLoanTransaction :execresult
 UPDATE `loan_transactions` SET
-  `is_deleted` = 1,
+  `is_deleted` = ?,
   `deleted_at` = ?,
   `deleted_by` = ?
 WHERE `id` = ?;
@@ -144,7 +147,7 @@ WHERE `id` = ?;
 
 -- name: DeleteLoanBilling :execresult
 UPDATE `loans_billing` SET
-  `is_deleted` = 1,
+  `is_deleted` = ?,
   `deleted_at` = ?,
   `deleted_by` = ?
 WHERE `id` = ?;
@@ -174,7 +177,7 @@ WHERE `id` = ?;
 
 -- name: DeleteLoanDelinquentHistory :execresult
 UPDATE `loan_delinquent_histories` SET
-  `is_deleted` = 1,
+  `is_deleted` = ?,
   `deleted_at` = ?,
   `deleted_by` = ?
 WHERE `id` = ?;
@@ -210,7 +213,7 @@ WHERE `id` = ?;
 
 -- name: DeleteLoanPayment :execresult
 UPDATE `loan_payments` SET
-  `is_deleted` = 1,
+  `is_deleted` = ?,
   `deleted_at` = ?,
   `deleted_by` = ?
 WHERE `id` = ?;

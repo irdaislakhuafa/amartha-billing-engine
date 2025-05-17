@@ -100,3 +100,5 @@ CREATE TABLE `loan_payments` (
  `deleted_by` VARCHAR(255) NULL,
  `is_deleted` TINYINT NOT NULL DEFAULT 0
 );
+
+ALTER TABLE `users` ADD COLUMN `delinquent_level` INT NOT NULL DEFAULT 0 AFTER `password`;

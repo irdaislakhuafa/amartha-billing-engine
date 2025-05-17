@@ -5,9 +5,16 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/v1/users
+  url: {{base_url}}/api/v1/users?page=0&limit=15&order_by=id&order_type=desc
   body: none
   auth: inherit
+}
+
+params:query {
+  page: 0
+  limit: 15
+  order_by: id
+  order_type: desc
 }
 
 body:json {

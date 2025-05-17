@@ -100,15 +100,16 @@ type LoansBilling struct {
 }
 
 type User struct {
-	ID        int64          `db:"id" json:"id"`
-	Name      string         `db:"name" json:"name"`
-	Email     string         `db:"email" json:"email"`
-	Password  string         `db:"password" json:"password"`
-	CreatedAt time.Time      `db:"created_at" json:"created_at"`
-	CreatedBy string         `db:"created_by" json:"created_by"`
-	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
-	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
-	DeletedAt sql.NullTime   `db:"deleted_at" json:"deleted_at"`
-	DeletedBy sql.NullString `db:"deleted_by" json:"deleted_by"`
-	IsDeleted int8           `db:"is_deleted" json:"is_deleted"`
+	ID              int64          `db:"id" json:"id"`
+	Name            string         `db:"name" json:"name"`
+	Email           string         `db:"email" json:"email"`
+	Password        string         `db:"password" json:"password"`
+	CreatedAt       time.Time      `db:"created_at" json:"created_at"`
+	CreatedBy       string         `db:"created_by" json:"created_by"`
+	UpdatedAt       sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy       sql.NullString `db:"updated_by" json:"updated_by"`
+	DeletedAt       sql.NullTime   `db:"deleted_at" json:"deleted_at"`
+	DeletedBy       sql.NullString `db:"deleted_by" json:"deleted_by"`
+	IsDeleted       int8           `db:"is_deleted" json:"is_deleted"`
+	DelinquentLevel int32          `db:"delinquent_level" json:"delinquent_level"`
 }

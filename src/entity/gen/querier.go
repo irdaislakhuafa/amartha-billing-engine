@@ -11,6 +11,7 @@ import (
 
 type Querier interface {
 	CountLoan(ctx context.Context) (int64, error)
+	CountLoanTransaction(ctx context.Context) (int64, error)
 	CountUser(ctx context.Context) (int64, error)
 	// LOANS
 	CreateLoan(ctx context.Context, arg CreateLoanParams) (sql.Result, error)
