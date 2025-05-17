@@ -183,15 +183,35 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateLoanTransactionPa
 }
 
 func (i *impl) Delete(ctx context.Context, params entity.DeleteLoanTransactionParams) (entity.LoanTransaction, error) {
-	// TODO: continue here
-	panic("not implemented")
+	args := entitygen.DeleteLoanTransactionParams{
+		ID:        params.ID,
+		IsDeleted: params.IsDeleted,
+		DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		DeletedBy: sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
+	}
 
+	_, err := i.queries.DeleteLoanTransaction(ctx, args)
+	if err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxExec, err.Error())
+	}
+
+	result := entity.LoanTransaction{
+		Base: entity.Base{
+			ID:        args.ID,
+			IsDeleted: args.IsDeleted,
+			DeletedAt: convert.SQLNullTimeToNil(args.DeletedAt),
+			DeletedBy: convert.SQLNullStringToNil(args.DeletedBy),
+		},
+	}
+
+	return result, nil
 }
 
 func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
-	// TODO: continue here
-	panic("not implemented")
-
+	return &impl{
+		queries: i.queries.WithTx(tx),
+		log:     i.log,
+	}
 }
 
 func (i *impl) rowToEntity(row entitygen.LoanTransaction) (entity.LoanTransaction, error) {
