@@ -118,6 +118,7 @@ WHERE `id` = ?;
 -- name: CreateLoanBilling :execresult
 INSERT INTO `loan_billings` (
   `loan_transaction_id`, 
+  `user_id`, 
   `bill_date`, 
   `principal_amount`, 
   `principal_amount_paid`, 
@@ -125,7 +126,7 @@ INSERT INTO `loan_billings` (
   `interest_amount_paid`, 
   `created_at`, 
   `created_by`
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetLoanBilling :one
 SELECT * FROM `loan_billings`;

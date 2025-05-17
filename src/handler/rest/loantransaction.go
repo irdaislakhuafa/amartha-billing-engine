@@ -20,3 +20,17 @@ func (r *rest) CreateLoanTransaction(c *fiber.Ctx) error {
 
 	return r.httpResSuccess(c, codes.CodeSuccess, result, nil)
 }
+
+func (r *rest) CalculateOutstandingLoanTransaction(c *fiber.Ctx) error {
+	params := entity.CalculateOutstandingLoanTransactionParams{}
+	if err := c.ParamsParser(&params); err != nil {
+		return r.httpResError(c, errors.NewWithCode(codes.CodeBadRequest, err.Error()))
+	}
+
+	result, err := r.uc.LoanTransaction.CalculateOutstanding(c.UserContext(), params)
+	if err != nil {
+		return r.httpResError(c, err)
+	}
+
+	return r.httpResSuccess(c, codes.CodeSuccess, result, nil)
+}

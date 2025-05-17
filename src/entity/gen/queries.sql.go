@@ -118,6 +118,7 @@ func (q *Queries) CreateLoan(ctx context.Context, arg CreateLoanParams) (sql.Res
 const createLoanBilling = `-- name: CreateLoanBilling :execresult
 INSERT INTO ` + "`" + `loan_billings` + "`" + ` (
   ` + "`" + `loan_transaction_id` + "`" + `, 
+  ` + "`" + `user_id` + "`" + `, 
   ` + "`" + `bill_date` + "`" + `, 
   ` + "`" + `principal_amount` + "`" + `, 
   ` + "`" + `principal_amount_paid` + "`" + `, 
@@ -125,11 +126,12 @@ INSERT INTO ` + "`" + `loan_billings` + "`" + ` (
   ` + "`" + `interest_amount_paid` + "`" + `, 
   ` + "`" + `created_at` + "`" + `, 
   ` + "`" + `created_by` + "`" + `
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateLoanBillingParams struct {
 	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	UserID              int64           `db:"user_id" json:"user_id"`
 	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
 	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
 	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
@@ -143,6 +145,7 @@ type CreateLoanBillingParams struct {
 func (q *Queries) CreateLoanBilling(ctx context.Context, arg CreateLoanBillingParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createLoanBilling,
 		arg.LoanTransactionID,
+		arg.UserID,
 		arg.BillDate,
 		arg.PrincipalAmount,
 		arg.PrincipalAmountPaid,
@@ -457,7 +460,7 @@ func (q *Queries) GetLoan(ctx context.Context) (Loan, error) {
 }
 
 const getLoanBilling = `-- name: GetLoanBilling :one
-SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_billings` + "`" + `
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, user_id FROM ` + "`" + `loan_billings` + "`" + `
 `
 
 func (q *Queries) GetLoanBilling(ctx context.Context) (LoanBilling, error) {
@@ -478,6 +481,7 @@ func (q *Queries) GetLoanBilling(ctx context.Context) (LoanBilling, error) {
 		&i.DeletedAt,
 		&i.DeletedBy,
 		&i.IsDeleted,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -623,7 +627,7 @@ func (q *Queries) ListLoan(ctx context.Context) ([]Loan, error) {
 }
 
 const listLoanBilling = `-- name: ListLoanBilling :many
-SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_billings` + "`" + `
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, user_id FROM ` + "`" + `loan_billings` + "`" + `
 `
 
 func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoanBilling, error) {
@@ -650,6 +654,7 @@ func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoanBilling, error) {
 			&i.DeletedAt,
 			&i.DeletedBy,
 			&i.IsDeleted,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

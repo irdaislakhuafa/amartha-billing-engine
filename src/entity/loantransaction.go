@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -45,6 +46,22 @@ type (
 	GetLoanTransactionParams struct {
 		ID        int64 `db:"id" json:"id" form:"id" params:"id" query:"id" validate:"required"`
 		IsDeleted int8  `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted" validate:""`
+	}
+
+	CalculateOutstandingLoanTransactionParams struct {
+		UserID int64 `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:"required"`
+	}
+
+	CalculateOutstandingLoanTransaction struct {
+		CurrentBillDate       *time.Time      `db:"current_bill_date" json:"current_bill_date"`
+		NextBillDate          *time.Time      `db:"next_bill_date" json:"next_bill_date"`
+		BilledPrincipalAmount decimal.Decimal `db:"billed_principal_amount" json:"billed_principal_amount"`
+		BilledInterestAmount  decimal.Decimal `db:"billed_interest_amount" json:"billed_interest_amount"`
+		TotalBilledAmount     decimal.Decimal `db:"total_billed_amount" json:"total_billed_amount"`
+		TotalPaidAmount       decimal.Decimal `db:"total_paid_amount" json:"total_paid_amount"`
+		OSPrincipalAmount     decimal.Decimal `db:"os_principal_amount" json:"os_principal_amount"`
+		OSInterestAmount      decimal.Decimal `db:"os_interest_amount" json:"os_interest_amount"`
+		TotalOSAmount         decimal.Decimal `db:"total_os_amount" json:"total_os_amount"`
 	}
 
 	LoanTransaction struct {

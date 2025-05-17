@@ -14,6 +14,7 @@ type (
 		PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid" form:"principal_amount_paid" params:"principal_amount_paid" query:"principal_amount_paid" validate:"required"`
 		InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount" form:"interest_amount" params:"interest_amount" query:"interest_amount" validate:"required"`
 		InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid" form:"interest_amount_paid" params:"interest_amount_paid" query:"interest_amount_paid" validate:"required"`
+		UserID              int64           `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:"required"`
 	}
 
 	UpdateLoanBillingParams struct {
@@ -65,6 +66,7 @@ type (
 		PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
 		InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
 		InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+		UserID              int64           `db:"user_id" json:"user_id"`
 		Base
 	}
 )

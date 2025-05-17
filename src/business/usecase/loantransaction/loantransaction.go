@@ -25,6 +25,7 @@ type (
 		Get(ctx context.Context, params entity.GetLoanTransactionParams) (entity.LoanTransaction, error)
 		Update(ctx context.Context, params entity.UpdateLoanTransactionParams) (entity.LoanTransaction, error)
 		Delete(ctx context.Context, params entity.DeleteLoanTransactionParams) (entity.LoanTransaction, error)
+		CalculateOutstanding(ctx context.Context, params entity.CalculateOutstandingLoanTransactionParams) (entity.CalculateOutstandingLoanTransaction, error)
 		WithTx(ctx context.Context, tx *sql.Tx) Interface
 	}
 
@@ -70,7 +71,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 			}
 			return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 		}
-
+		user.Password = ""
 		userBytes, err := json.Marshal(user)
 		if err != nil {
 			return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeJSONMarshalError, err.Error())
@@ -155,6 +156,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 		interest := principal.Div(decimal.NewFromInt(100)).Mul(loan.InterestRate)
 		createdBilling, err := dLoanBilling.Create(ctx, entity.CreateLoanBillingParams{
 			LoanTransactionID:   result.ID,
+			UserID:              params.UserID,
 			BillDate:            billing.BillDate,
 			PrincipalAmount:     principal,
 			PrincipalAmountPaid: decimal.NewFromInt(0),
@@ -174,6 +176,74 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 	}
 
 	result.LoanBilling = createdBillings
+	return result, nil
+}
+
+func (i *impl) CalculateOutstanding(ctx context.Context, params entity.CalculateOutstandingLoanTransactionParams) (entity.CalculateOutstandingLoanTransaction, error) {
+	// validate params
+	if err := i.val.StructCtx(ctx, params); err != nil {
+		err = validation.ExtractError(err, params)
+		return entity.CalculateOutstandingLoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	result := entity.CalculateOutstandingLoanTransaction{
+		CurrentBillDate:       nil,
+		NextBillDate:          nil,
+		BilledPrincipalAmount: decimal.Decimal{},
+		BilledInterestAmount:  decimal.Decimal{},
+		TotalBilledAmount:     decimal.Decimal{},
+		TotalPaidAmount:       decimal.Decimal{},
+		OSPrincipalAmount:     decimal.Decimal{},
+		OSInterestAmount:      decimal.Decimal{},
+		TotalOSAmount:         decimal.Decimal{},
+	}
+
+	// get billing
+	billings, _, err := i.dom.LoanBilling.List(ctx, entity.ListLoanBillingParams{
+		PaginationParams: entity.PaginationParams{
+			Limit:     9_999_999,
+			Page:      0,
+			OrderBy:   "bill_date",
+			OrderType: "desc",
+		},
+		IsDeleted: 0,
+	})
+	if err != nil {
+		return result, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	if len(billings) > 0 {
+		now := time.Now()
+		for _, b := range billings {
+			// get current billing
+			isCurrent := b.BillDate.Before(now) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
+			if isCurrent {
+				result.CurrentBillDate = &b.BillDate
+			}
+
+			// get next billing
+			isNext := b.BillDate.After(now) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
+			if isNext {
+				result.NextBillDate = &b.BillDate
+			}
+
+			// get billed principal amount
+			if b.BillDate.Before(now) {
+				result.BilledPrincipalAmount = result.BilledPrincipalAmount.Add(b.PrincipalAmount)
+				result.BilledInterestAmount = result.BilledInterestAmount.Add(b.InterestAmount)
+				result.TotalBilledAmount = result.TotalBilledAmount.Add(b.PrincipalAmount).Add(b.InterestAmount)
+				result.TotalPaidAmount = result.TotalPaidAmount.Add(b.PrincipalAmountPaid).Add(b.InterestAmountPaid)
+			}
+
+			// get outstanding principal amount
+			// if b.BillDate.Before(now) {
+			result.OSPrincipalAmount = result.OSPrincipalAmount.Add(b.PrincipalAmount).Sub(b.PrincipalAmountPaid)
+			result.OSInterestAmount = result.OSInterestAmount.Add(b.InterestAmount).Sub(b.InterestAmountPaid)
+			result.TotalOSAmount = result.TotalOSAmount.Add(b.PrincipalAmount).Add(b.InterestAmount)
+			// }
+		}
+	}
+
 	return result, nil
 }
 

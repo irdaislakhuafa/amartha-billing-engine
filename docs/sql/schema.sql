@@ -103,3 +103,5 @@ CREATE TABLE `loan_payments` (
 );
 
 ALTER TABLE `users` ADD COLUMN `delinquent_level` INT NOT NULL DEFAULT 0 AFTER `password`;
+ALTER TABLE `loan_billings` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT "refer to users.id" AFTER `loan_transaction_id`;
+-- ALTER TABLE `loan_payments` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT "refer to users.id" AFTER `loan_transaction_id`;

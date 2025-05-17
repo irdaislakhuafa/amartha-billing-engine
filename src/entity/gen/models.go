@@ -46,6 +46,8 @@ type LoanBilling struct {
 	DeletedAt           sql.NullTime    `db:"deleted_at" json:"deleted_at"`
 	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
 	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
+	// refer to users.id
+	UserID int64 `db:"user_id" json:"user_id"`
 }
 
 type LoanDelinquentHistory struct {

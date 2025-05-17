@@ -22,5 +22,6 @@ func (r *rest) RegisterRoutes() {
 		v1.Delete("/users/:id/:is_deleted", r.authJWT, r.DeleteUser)
 
 		v1.Post("/loan/transactions", r.authJWT, r.CreateLoanTransaction)
+		v1.Get("/loan/transaction/calculate/:user_id", r.authJWT, r.CalculateOutstandingLoanTransaction)
 	}
 }

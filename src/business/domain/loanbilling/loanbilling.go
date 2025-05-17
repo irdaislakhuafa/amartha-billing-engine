@@ -42,6 +42,7 @@ func Init(log log.Interface, queries *entitygen.Queries) Interface {
 func (i *impl) Create(ctx context.Context, params entity.CreateLoanBillingParams) (entity.LoanBilling, error) {
 	args := entitygen.CreateLoanBillingParams{
 		LoanTransactionID:   params.LoanTransactionID,
+		UserID:              params.UserID,
 		BillDate:            params.BillDate,
 		PrincipalAmount:     params.PrincipalAmount,
 		PrincipalAmountPaid: params.PrincipalAmountPaid,
@@ -58,6 +59,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanBillingParams
 
 	result := entity.LoanBilling{
 		LoanTransactionID:   args.LoanTransactionID,
+		UserID:              args.UserID,
 		BillDate:            args.BillDate,
 		PrincipalAmount:     args.PrincipalAmount,
 		PrincipalAmountPaid: args.PrincipalAmountPaid,
@@ -256,6 +258,7 @@ func (i *impl) rowToEntity(row entitygen.LoanBilling) (entity.LoanBilling, error
 	result := entity.LoanBilling{
 		LoanTransactionID:   row.LoanTransactionID,
 		BillDate:            row.BillDate,
+		UserID:              row.UserID,
 		PrincipalAmount:     row.PrincipalAmount,
 		PrincipalAmountPaid: row.PrincipalAmountPaid,
 		InterestAmount:      row.InterestAmount,
