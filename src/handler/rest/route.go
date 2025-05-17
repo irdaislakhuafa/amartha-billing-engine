@@ -11,15 +11,16 @@ func (r *rest) RegisterRoutes() {
 		v1.Post("/auth/login", r.Login)
 
 		v1.Get("/loans", r.ListLoan)
-		v1.Post("/loans", r.authJWT, r.CreateLoan)
-		v1.Put("/loans", r.authJWT, r.UpdateLoan)
+		v1.Post("/loans", r.CreateLoan)
+		v1.Put("/loans", r.UpdateLoan)
 		v1.Get("/loans/:id", r.GetLoan)
-		v1.Delete("/loans/:id/:is_deleted", r.authJWT, r.DeleteLoan)
+		v1.Delete("/loans/:id/:is_deleted", r.DeleteLoan)
 
 		v1.Get("/users", r.authJWT, r.ListUser)
 		v1.Put("/users", r.authJWT, r.UpdateUser)
 		v1.Get("/users/:id", r.authJWT, r.GetUser)
 		v1.Delete("/users/:id/:is_deleted", r.authJWT, r.DeleteUser)
 
+		v1.Post("/loan/transactions", r.authJWT, r.CreateLoanTransaction)
 	}
 }

@@ -49,3 +49,9 @@ type (
 		Base
 	}
 )
+
+const (
+	REPAYMENT_TYPE_WEEKS  = "weeks"
+	REPAYMENT_TYPE_MONTHS = "months"
+	REPAYMENT_TYPE_YEARS  = "years"
+)

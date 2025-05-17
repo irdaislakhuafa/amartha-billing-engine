@@ -156,14 +156,16 @@ func (q *Queries) CreateLoanBilling(ctx context.Context, arg CreateLoanBillingPa
 const createLoanDelinquentHistory = `-- name: CreateLoanDelinquentHistory :execresult
 INSERT INTO ` + "`" + `loan_delinquent_histories` + "`" + ` (
   ` + "`" + `loan_transaction_id` + "`" + `, 
+  ` + "`" + `user_id` + "`" + `, 
   ` + "`" + `bills` + "`" + `, 
   ` + "`" + `created_at` + "`" + `, 
   ` + "`" + `created_by` + "`" + `
-) VALUES (?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?)
 `
 
 type CreateLoanDelinquentHistoryParams struct {
 	LoanTransactionID int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	UserID            int64           `db:"user_id" json:"user_id"`
 	Bills             json.RawMessage `db:"bills" json:"bills"`
 	CreatedAt         time.Time       `db:"created_at" json:"created_at"`
 	CreatedBy         string          `db:"created_by" json:"created_by"`
@@ -173,6 +175,7 @@ type CreateLoanDelinquentHistoryParams struct {
 func (q *Queries) CreateLoanDelinquentHistory(ctx context.Context, arg CreateLoanDelinquentHistoryParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createLoanDelinquentHistory,
 		arg.LoanTransactionID,
+		arg.UserID,
 		arg.Bills,
 		arg.CreatedAt,
 		arg.CreatedBy,
@@ -480,7 +483,7 @@ func (q *Queries) GetLoanBilling(ctx context.Context) (LoanBilling, error) {
 }
 
 const getLoanDelinquentHistory = `-- name: GetLoanDelinquentHistory :one
-SELECT id, loan_transaction_id, bills, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_delinquent_histories` + "`" + `
+SELECT id, loan_transaction_id, user_id, bills, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_delinquent_histories` + "`" + `
 `
 
 func (q *Queries) GetLoanDelinquentHistory(ctx context.Context) (LoanDelinquentHistory, error) {
@@ -489,6 +492,7 @@ func (q *Queries) GetLoanDelinquentHistory(ctx context.Context) (LoanDelinquentH
 	err := row.Scan(
 		&i.ID,
 		&i.LoanTransactionID,
+		&i.UserID,
 		&i.Bills,
 		&i.CreatedAt,
 		&i.CreatedBy,
@@ -661,7 +665,7 @@ func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoanBilling, error) {
 }
 
 const listLoanDelinquentHistory = `-- name: ListLoanDelinquentHistory :many
-SELECT id, loan_transaction_id, bills, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_delinquent_histories` + "`" + `
+SELECT id, loan_transaction_id, user_id, bills, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_delinquent_histories` + "`" + `
 `
 
 func (q *Queries) ListLoanDelinquentHistory(ctx context.Context) ([]LoanDelinquentHistory, error) {
@@ -676,6 +680,7 @@ func (q *Queries) ListLoanDelinquentHistory(ctx context.Context) ([]LoanDelinque
 		if err := rows.Scan(
 			&i.ID,
 			&i.LoanTransactionID,
+			&i.UserID,
 			&i.Bills,
 			&i.CreatedAt,
 			&i.CreatedBy,
@@ -900,6 +905,7 @@ func (q *Queries) UpdateLoanBilling(ctx context.Context, arg UpdateLoanBillingPa
 const updateLoanDelinquentHistory = `-- name: UpdateLoanDelinquentHistory :execresult
 UPDATE ` + "`" + `loan_delinquent_histories` + "`" + ` SET
   ` + "`" + `loan_transaction_id` + "`" + ` = ?,
+  ` + "`" + `user_id` + "`" + ` = ?,
   ` + "`" + `bills` + "`" + ` = ?,
   ` + "`" + `updated_at` + "`" + ` = ?,
   ` + "`" + `updated_by` + "`" + ` = ?
@@ -908,6 +914,7 @@ WHERE ` + "`" + `id` + "`" + ` = ?
 
 type UpdateLoanDelinquentHistoryParams struct {
 	LoanTransactionID int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	UserID            int64           `db:"user_id" json:"user_id"`
 	Bills             json.RawMessage `db:"bills" json:"bills"`
 	UpdatedAt         sql.NullTime    `db:"updated_at" json:"updated_at"`
 	UpdatedBy         sql.NullString  `db:"updated_by" json:"updated_by"`
@@ -917,6 +924,7 @@ type UpdateLoanDelinquentHistoryParams struct {
 func (q *Queries) UpdateLoanDelinquentHistory(ctx context.Context, arg UpdateLoanDelinquentHistoryParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateLoanDelinquentHistory,
 		arg.LoanTransactionID,
+		arg.UserID,
 		arg.Bills,
 		arg.UpdatedAt,
 		arg.UpdatedBy,

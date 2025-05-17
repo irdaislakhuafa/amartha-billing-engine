@@ -159,10 +159,11 @@ WHERE `id` = ?;
 -- name: CreateLoanDelinquentHistory :execresult
 INSERT INTO `loan_delinquent_histories` (
   `loan_transaction_id`, 
+  `user_id`, 
   `bills`, 
   `created_at`, 
   `created_by`
-) VALUES (?, ?, ?, ?);
+) VALUES (?, ?, ?, ?, ?);
 
 -- name: GetLoanDelinquentHistory :one
 SELECT * FROM `loan_delinquent_histories`;
@@ -176,6 +177,7 @@ SELECT COUNT(`id`) AS `total` FROM `loan_delinquent_histories`;
 -- name: UpdateLoanDelinquentHistory :execresult
 UPDATE `loan_delinquent_histories` SET
   `loan_transaction_id` = ?,
+  `user_id` = ?,
   `bills` = ?,
   `updated_at` = ?,
   `updated_by` = ?

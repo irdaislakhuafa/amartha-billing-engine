@@ -13,6 +13,7 @@ import (
 	"github.com/irdaislakhuafa/go-sdk/errors"
 	"github.com/irdaislakhuafa/go-sdk/log"
 	"github.com/irdaislakhuafa/go-sdk/querybuilder/sqlc"
+	"github.com/shopspring/decimal"
 )
 
 type (
@@ -45,7 +46,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 		User:          params.User,
 		LoanID:        params.LoanID,
 		Loan:          params.Loan,
-		Amount:        params.Amount,
+		Amount:        decimal.NewFromFloat(params.Amount),
 		CreatedAt:     time.Now(),
 		CreatedBy:     convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)),
 	}
@@ -153,7 +154,7 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateLoanTransactionPa
 		User:          params.User,
 		LoanID:        params.LoanID,
 		Loan:          params.Loan,
-		Amount:        params.Amount,
+		Amount:        decimal.NewFromFloat(params.Amount),
 		UpdatedAt:     sql.NullTime{Time: time.Now(), Valid: true},
 		UpdatedBy:     sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
 		ID:            params.ID,

@@ -196,9 +196,10 @@ func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
 
 func (i *impl) rowToEntity(row entitygen.User) (entity.User, error) {
 	result := entity.User{
-		Name:     row.Name,
-		Email:    row.Email,
-		Password: row.Password,
+		Name:            row.Name,
+		Email:           row.Email,
+		Password:        row.Password,
+		DelinquentLevel: int(row.DelinquentLevel),
 		Base: entity.Base{
 			ID:        row.ID,
 			CreatedAt: row.CreatedAt,

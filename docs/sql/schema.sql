@@ -74,6 +74,7 @@ CREATE TABLE `loan_billings` (
 CREATE TABLE `loan_delinquent_histories` (
  `id` BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
  `loan_transaction_id` BIGINT NOT NULL COMMENT "refer to loan_transactions.id",
+ `user_id` BIGINT NOT NULL COMMENT "refer to users.id",
  `bills` JSON NOT NULL,
  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  `created_by` VARCHAR(255) NOT NULL,

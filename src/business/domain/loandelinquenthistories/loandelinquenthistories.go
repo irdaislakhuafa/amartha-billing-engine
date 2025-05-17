@@ -22,6 +22,7 @@ type (
 		Get(ctx context.Context, params entity.GetLoanDelinquentHistoryParams) (entity.LoanDelinquentHistory, error)
 		Update(ctx context.Context, params entity.UpdateLoanDelinquentHistoryParams) (entity.LoanDelinquentHistory, error)
 		Delete(ctx context.Context, params entity.DeleteLoanDelinquentHistoryParams) (entity.LoanDelinquentHistory, error)
+		Count(ctx context.Context, params entity.CountLoanDelinquentHistoryParams) (int64, error)
 		WithTx(ctx context.Context, tx *sql.Tx) Interface
 	}
 
@@ -42,6 +43,7 @@ func Init(log log.Interface, queries *entitygen.Queries) Interface {
 func (i *impl) Create(ctx context.Context, params entity.CreateLoanDelinquentHistoryParams) (entity.LoanDelinquentHistory, error) {
 	args := entitygen.CreateLoanDelinquentHistoryParams{
 		LoanTransactionID: params.LoanTransactionID,
+		UserID:            params.UserID,
 		Bills:             params.Bills,
 		CreatedAt:         time.Now(),
 		CreatedBy:         convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)),
@@ -54,6 +56,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanDelinquentHis
 
 	result := entity.LoanDelinquentHistory{
 		LoanTransactionID: args.LoanTransactionID,
+		UserID:            args.UserID,
 		Bills:             args.Bills,
 		Base: entity.Base{
 			CreatedAt: args.CreatedAt,
@@ -126,6 +129,9 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanDelinquentHistory
 		if params.LoanTransactionID != 0 {
 			b.And("loan_transaction_id = ?", params.LoanTransactionID)
 		}
+		if params.UserID != 0 {
+			b.And("user_id = ?", params.UserID)
+		}
 	})
 
 	rows, err := i.queries.ListLoanDelinquentHistory(sqlc.Build(ctx, func(b *sqlc.Builder) {
@@ -160,6 +166,7 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanDelinquentHistory
 func (i *impl) Update(ctx context.Context, params entity.UpdateLoanDelinquentHistoryParams) (entity.LoanDelinquentHistory, error) {
 	args := entitygen.UpdateLoanDelinquentHistoryParams{
 		LoanTransactionID: params.LoanTransactionID,
+		UserID:            params.UserID,
 		Bills:             params.Bills,
 		UpdatedAt:         sql.NullTime{Time: time.Now(), Valid: true},
 		UpdatedBy:         sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
@@ -173,6 +180,7 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateLoanDelinquentHis
 
 	result := entity.LoanDelinquentHistory{
 		LoanTransactionID: args.LoanTransactionID,
+		UserID:            args.UserID,
 		Bills:             args.Bills,
 		Base: entity.Base{
 			ID:        args.ID,
@@ -182,6 +190,25 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateLoanDelinquentHis
 	}
 
 	return result, nil
+}
+
+func (i *impl) Count(ctx context.Context, params entity.CountLoanDelinquentHistoryParams) (int64, error) {
+	ctx = sqlc.Build(ctx, func(b *sqlc.Builder) {
+		b.And("is_deleted = ?", params.IsDeleted)
+		if params.LoanTransactionID != 0 {
+			b.And("loan_transaction_id = ?", params.LoanTransactionID)
+		}
+		if params.UserID != 0 {
+			b.And("user_id = ?", params.UserID)
+		}
+	})
+
+	total, err := i.queries.CountLoanDelinquentHistory(ctx)
+	if err != nil {
+		return 0, errors.NewWithCode(codes.CodeSQLRead, err.Error())
+	}
+
+	return total, nil
 }
 
 // WithTx implements Interface.
@@ -194,6 +221,7 @@ func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
 func (i *impl) rowToEntity(row entitygen.LoanDelinquentHistory) (entity.LoanDelinquentHistory, error) {
 	result := entity.LoanDelinquentHistory{
 		LoanTransactionID: row.LoanTransactionID,
+		UserID:            row.UserID,
 		Bills:             row.Bills,
 		Base: entity.Base{
 			ID:        row.ID,
