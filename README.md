@@ -3,10 +3,10 @@ This is Amartha Billing Engine that provide billing services for loaning. This p
 
 This project is built with my SDK for Go Development [go-sdk](https://github.com/irdaislakhuafa/go-sdk) and started at 17 May 2025 after i answer the email ![alt text](image.png).
 
-## LIMITATION
-Because i have limited time, i can't implement all features that i want to implement. Here is the limitation:
-- User can only have 1 loan transaction until user pay it full
-- User can't have 2 loan transaction at the same time
+## LIMITATIONS
+Due to the time constraint, there are some features that are not implemented yet. Here are the limitations:
+- A user can only have one loan transaction at a time. If a user requests a new loan transaction, the previous one must be paid in full first.
+- A user cannot have two loan transactions at the same time if the previous transaction is not paid fully.
 
 ## Usages
 This app use docker as container so it's easy to deploy, you don't need to configure anything if you already have docker installed in your machine.
