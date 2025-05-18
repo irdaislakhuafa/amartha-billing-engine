@@ -25,6 +25,7 @@ func (r *rest) RegisterRoutes() {
 		v1.Get("/loan/transactions", r.authJWT, r.ListLoanTransaction)
 		v1.Get("/loan/transaction/calculate/:user_id", r.authJWT, r.CalculateOutstandingLoanTransaction)
 		v1.Post("/loan/transaction/pay", r.authJWT, r.PayLoanTransaction)
+		v1.Post("/loan/transaction/schedule-delinquent", r.authJWT, r.ScheduleDelinquent)
 
 		v1.Post("/settings", r.authJWT, r.CreateSetting)
 		v1.Get("/settings", r.authJWT, r.ListSetting)

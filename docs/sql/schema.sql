@@ -120,4 +120,7 @@ CREATE TABLE `settings` (
     `is_deleted` TINYINT NOT NULL DEFAULT 0
 );
 
--- ALTER TABLE `loan_transactions` ADD COLUMN `status` VARCHAR(255) NOT NULL DEFAULT 'unpaid' COMMENT 'unpaid, paid' AFTER `user_id`;
+ALTER TABLE `loan_billings` ADD COLUMN `is_checked_for_delinquent` TINYINT NOT NULL DEFAULT 0 AFTER `user_id`;
+ALTER TABLE `loan_payments` ADD COLUMN `loan_billing_id` BIGINT NOT NULL COMMENT "refer to loan_billings.id" AFTER `loan_transaction_id`;
+ALTER TABLE `loan_billings` ADD COLUMN `status` VARCHAR(255) NOT NULL DEFAULT 'unpaid' COMMENT "unpaid, paid" AFTER `is_checked_for_delinquent`;
+ALTER TABLE `settings` ADD CONSTRAINT `name_unique` UNIQUE (`name`);

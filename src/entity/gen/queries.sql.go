@@ -131,19 +131,21 @@ INSERT INTO ` + "`" + `loan_billings` + "`" + ` (
   ` + "`" + `loan_transaction_id` + "`" + `, 
   ` + "`" + `user_id` + "`" + `, 
   ` + "`" + `bill_date` + "`" + `, 
+  ` + "`" + `status` + "`" + `,
   ` + "`" + `principal_amount` + "`" + `, 
   ` + "`" + `principal_amount_paid` + "`" + `, 
   ` + "`" + `interest_amount` + "`" + `, 
   ` + "`" + `interest_amount_paid` + "`" + `, 
   ` + "`" + `created_at` + "`" + `, 
   ` + "`" + `created_by` + "`" + `
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateLoanBillingParams struct {
 	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
 	UserID              int64           `db:"user_id" json:"user_id"`
 	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
+	Status              string          `db:"status" json:"status"`
 	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
 	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
 	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
@@ -158,6 +160,7 @@ func (q *Queries) CreateLoanBilling(ctx context.Context, arg CreateLoanBillingPa
 		arg.LoanTransactionID,
 		arg.UserID,
 		arg.BillDate,
+		arg.Status,
 		arg.PrincipalAmount,
 		arg.PrincipalAmountPaid,
 		arg.InterestAmount,
@@ -199,17 +202,19 @@ func (q *Queries) CreateLoanDelinquentHistory(ctx context.Context, arg CreateLoa
 const createLoanPayment = `-- name: CreateLoanPayment :execresult
 INSERT INTO ` + "`" + `loan_payments` + "`" + ` (
   ` + "`" + `loan_transaction_id` + "`" + `, 
+  ` + "`" + `loan_billing_id` + "`" + `, 
   ` + "`" + `principal_amount` + "`" + `, 
   ` + "`" + `principal_amount_paid` + "`" + `, 
   ` + "`" + `interest_amount` + "`" + `, 
   ` + "`" + `interest_amount_paid` + "`" + `, 
   ` + "`" + `created_at` + "`" + `, 
   ` + "`" + `created_by` + "`" + `
-) VALUES (?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateLoanPaymentParams struct {
 	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	LoanBillingID       int64           `db:"loan_billing_id" json:"loan_billing_id"`
 	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
 	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
 	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
@@ -222,6 +227,7 @@ type CreateLoanPaymentParams struct {
 func (q *Queries) CreateLoanPayment(ctx context.Context, arg CreateLoanPaymentParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createLoanPayment,
 		arg.LoanTransactionID,
+		arg.LoanBillingID,
 		arg.PrincipalAmount,
 		arg.PrincipalAmountPaid,
 		arg.InterestAmount,
@@ -521,7 +527,7 @@ func (q *Queries) GetLoan(ctx context.Context) (Loan, error) {
 }
 
 const getLoanBilling = `-- name: GetLoanBilling :one
-SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, user_id FROM ` + "`" + `loan_billings` + "`" + `
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, user_id, is_checked_for_delinquent, status FROM ` + "`" + `loan_billings` + "`" + `
 `
 
 func (q *Queries) GetLoanBilling(ctx context.Context) (LoanBilling, error) {
@@ -543,6 +549,8 @@ func (q *Queries) GetLoanBilling(ctx context.Context) (LoanBilling, error) {
 		&i.DeletedBy,
 		&i.IsDeleted,
 		&i.UserID,
+		&i.IsCheckedForDelinquent,
+		&i.Status,
 	)
 	return i, err
 }
@@ -571,7 +579,7 @@ func (q *Queries) GetLoanDelinquentHistory(ctx context.Context) (LoanDelinquentH
 }
 
 const getLoanPayment = `-- name: GetLoanPayment :one
-SELECT id, loan_transaction_id, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_payments` + "`" + `
+SELECT id, loan_transaction_id, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, loan_billing_id FROM ` + "`" + `loan_payments` + "`" + `
 `
 
 func (q *Queries) GetLoanPayment(ctx context.Context) (LoanPayment, error) {
@@ -591,6 +599,7 @@ func (q *Queries) GetLoanPayment(ctx context.Context) (LoanPayment, error) {
 		&i.DeletedAt,
 		&i.DeletedBy,
 		&i.IsDeleted,
+		&i.LoanBillingID,
 	)
 	return i, err
 }
@@ -710,7 +719,7 @@ func (q *Queries) ListLoan(ctx context.Context) ([]Loan, error) {
 }
 
 const listLoanBilling = `-- name: ListLoanBilling :many
-SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, user_id FROM ` + "`" + `loan_billings` + "`" + `
+SELECT id, loan_transaction_id, bill_date, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, user_id, is_checked_for_delinquent, status FROM ` + "`" + `loan_billings` + "`" + `
 `
 
 func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoanBilling, error) {
@@ -738,6 +747,8 @@ func (q *Queries) ListLoanBilling(ctx context.Context) ([]LoanBilling, error) {
 			&i.DeletedBy,
 			&i.IsDeleted,
 			&i.UserID,
+			&i.IsCheckedForDelinquent,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -792,7 +803,7 @@ func (q *Queries) ListLoanDelinquentHistory(ctx context.Context) ([]LoanDelinque
 }
 
 const listLoanPayment = `-- name: ListLoanPayment :many
-SELECT id, loan_transaction_id, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_payments` + "`" + `
+SELECT id, loan_transaction_id, principal_amount, principal_amount_paid, interest_amount, interest_amount_paid, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted, loan_billing_id FROM ` + "`" + `loan_payments` + "`" + `
 `
 
 func (q *Queries) ListLoanPayment(ctx context.Context) ([]LoanPayment, error) {
@@ -818,6 +829,7 @@ func (q *Queries) ListLoanPayment(ctx context.Context) ([]LoanPayment, error) {
 			&i.DeletedAt,
 			&i.DeletedBy,
 			&i.IsDeleted,
+			&i.LoanBillingID,
 		); err != nil {
 			return nil, err
 		}
@@ -993,35 +1005,41 @@ const updateLoanBilling = `-- name: UpdateLoanBilling :execresult
 UPDATE ` + "`" + `loan_billings` + "`" + ` SET
   ` + "`" + `loan_transaction_id` + "`" + ` = ?,
   ` + "`" + `bill_date` + "`" + ` = ?,
+  ` + "`" + `status` + "`" + ` = ?,
   ` + "`" + `principal_amount` + "`" + ` = ?,
   ` + "`" + `principal_amount_paid` + "`" + ` = ?,
   ` + "`" + `interest_amount` + "`" + ` = ?,
   ` + "`" + `interest_amount_paid` + "`" + ` = ?,
+  ` + "`" + `is_checked_for_delinquent` + "`" + ` = ?,
   ` + "`" + `updated_at` + "`" + ` = ?,
   ` + "`" + `updated_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type UpdateLoanBillingParams struct {
-	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
-	BillDate            time.Time       `db:"bill_date" json:"bill_date"`
-	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
-	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
-	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
-	InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
-	UpdatedAt           sql.NullTime    `db:"updated_at" json:"updated_at"`
-	UpdatedBy           sql.NullString  `db:"updated_by" json:"updated_by"`
-	ID                  int64           `db:"id" json:"id"`
+	LoanTransactionID      int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	BillDate               time.Time       `db:"bill_date" json:"bill_date"`
+	Status                 string          `db:"status" json:"status"`
+	PrincipalAmount        decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+	PrincipalAmountPaid    decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+	InterestAmount         decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+	InterestAmountPaid     decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+	IsCheckedForDelinquent int8            `db:"is_checked_for_delinquent" json:"is_checked_for_delinquent"`
+	UpdatedAt              sql.NullTime    `db:"updated_at" json:"updated_at"`
+	UpdatedBy              sql.NullString  `db:"updated_by" json:"updated_by"`
+	ID                     int64           `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateLoanBilling(ctx context.Context, arg UpdateLoanBillingParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateLoanBilling,
 		arg.LoanTransactionID,
 		arg.BillDate,
+		arg.Status,
 		arg.PrincipalAmount,
 		arg.PrincipalAmountPaid,
 		arg.InterestAmount,
 		arg.InterestAmountPaid,
+		arg.IsCheckedForDelinquent,
 		arg.UpdatedAt,
 		arg.UpdatedBy,
 		arg.ID,
@@ -1061,6 +1079,7 @@ func (q *Queries) UpdateLoanDelinquentHistory(ctx context.Context, arg UpdateLoa
 const updateLoanPayment = `-- name: UpdateLoanPayment :execresult
 UPDATE ` + "`" + `loan_payments` + "`" + ` SET
   ` + "`" + `loan_transaction_id` + "`" + ` = ?,
+  ` + "`" + `loan_billing_id` + "`" + ` = ?,
   ` + "`" + `principal_amount` + "`" + ` = ?,
   ` + "`" + `principal_amount_paid` + "`" + ` = ?,
   ` + "`" + `interest_amount` + "`" + ` = ?,
@@ -1072,6 +1091,7 @@ WHERE ` + "`" + `id` + "`" + ` = ?
 
 type UpdateLoanPaymentParams struct {
 	LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+	LoanBillingID       int64           `db:"loan_billing_id" json:"loan_billing_id"`
 	PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
 	PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
 	InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
@@ -1084,6 +1104,7 @@ type UpdateLoanPaymentParams struct {
 func (q *Queries) UpdateLoanPayment(ctx context.Context, arg UpdateLoanPaymentParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateLoanPayment,
 		arg.LoanTransactionID,
+		arg.LoanBillingID,
 		arg.PrincipalAmount,
 		arg.PrincipalAmountPaid,
 		arg.InterestAmount,
@@ -1167,23 +1188,26 @@ const updateUser = `-- name: UpdateUser :execresult
 UPDATE ` + "`" + `users` + "`" + ` SET
   ` + "`" + `name` + "`" + ` = ?,
   ` + "`" + `email` + "`" + ` = ?,
+  ` + "`" + `delinquent_level` + "`" + ` = ?,
   ` + "`" + `updated_at` + "`" + ` = ?,
   ` + "`" + `updated_by` + "`" + ` = ?
 WHERE ` + "`" + `id` + "`" + ` = ?
 `
 
 type UpdateUserParams struct {
-	Name      string         `db:"name" json:"name"`
-	Email     string         `db:"email" json:"email"`
-	UpdatedAt sql.NullTime   `db:"updated_at" json:"updated_at"`
-	UpdatedBy sql.NullString `db:"updated_by" json:"updated_by"`
-	ID        int64          `db:"id" json:"id"`
+	Name            string         `db:"name" json:"name"`
+	Email           string         `db:"email" json:"email"`
+	DelinquentLevel int32          `db:"delinquent_level" json:"delinquent_level"`
+	UpdatedAt       sql.NullTime   `db:"updated_at" json:"updated_at"`
+	UpdatedBy       sql.NullString `db:"updated_by" json:"updated_by"`
+	ID              int64          `db:"id" json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateUser,
 		arg.Name,
 		arg.Email,
+		arg.DelinquentLevel,
 		arg.UpdatedAt,
 		arg.UpdatedBy,
 		arg.ID,

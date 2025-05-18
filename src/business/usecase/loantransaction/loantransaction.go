@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -13,7 +15,9 @@ import (
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/errmessages"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/validation"
 	"github.com/irdaislakhuafa/go-sdk/codes"
+	"github.com/irdaislakhuafa/go-sdk/collections"
 	"github.com/irdaislakhuafa/go-sdk/convert"
+	"github.com/irdaislakhuafa/go-sdk/datastructure"
 	"github.com/irdaislakhuafa/go-sdk/errors"
 	"github.com/irdaislakhuafa/go-sdk/log"
 	"github.com/shopspring/decimal"
@@ -28,6 +32,7 @@ type (
 		Delete(ctx context.Context, params entity.DeleteLoanTransactionParams) (entity.LoanTransaction, error)
 		CalculateOutstanding(ctx context.Context, params entity.CalculateOutstandingLoanTransactionParams) (entity.CalculateOutstandingLoanTransaction, error)
 		Pay(ctx context.Context, params entity.PayLoanTransactionParams) (entity.LoanTransaction, error)
+		ScheduleDelinquent(ctx context.Context) error
 	}
 
 	impl struct {
@@ -128,6 +133,22 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.USER_IS_DELINQUENT)
 	}
 
+	// NOTE: because i have limited time to implement proper logic for multiple transaction in one billing
+	// so i will implement simple logic for now like 1 user only have one loan transaction until it's paid
+	_, err = i.dom.LoanBilling.Get(ctx, entity.GetLoanBillingParams{
+		UserID:    params.UserID,
+		Status:    entity.LOAN_BILLING_STATUS_UNPAID,
+		IsDeleted: 0,
+	})
+	if err != nil {
+		code := errors.GetCode(err)
+		if code.IsNotOneOf(codes.CodeSQLRecordDoesNotExist) {
+			return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+	} else {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.TRANSACTION_LIMIT)
+	}
+
 	// begin db tx
 	tx, err := i.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
@@ -208,11 +229,11 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 	}
 
 	// commit tx
-	// if err := tx.Commit(); err != nil {
-	// 	return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
-	// }
+	if err := tx.Commit(); err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
+	}
 
-	result.LoanBilling = createdBillings
+	result.LoanBillings = createdBillings
 	return result, nil
 }
 
@@ -255,7 +276,7 @@ func (i *impl) CalculateOutstanding(ctx context.Context, params entity.Calculate
 			Limit:     9_999_999,
 			Page:      0,
 			OrderBy:   "bill_date",
-			OrderType: "desc",
+			OrderType: "asc",
 		},
 		IsDeleted: 0,
 	})
@@ -267,20 +288,21 @@ func (i *impl) CalculateOutstanding(ctx context.Context, params entity.Calculate
 		now := EOD_DATE
 		for _, b := range billings {
 			// get current billing
-			isCurrent := b.BillDate.Before(now) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
+			billDate := time.Date(b.BillDate.Year(), b.BillDate.Month(), b.BillDate.Day(), 0, 0, 0, 0, time.UTC)
+			isCurrent := (billDate.Before(now) || billDate.Equal(now)) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
 			if isCurrent {
-				result.CurrentBillDate = &b.BillDate
+				result.CurrentBillDate = &billDate
 				result.ListBilledBilling = append(result.ListBilledBilling, b)
 			}
 
 			// get next billing
-			isNext := b.BillDate.After(now) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
+			isNext := (billDate.After(now) && !billDate.Equal(now) && result.NextBillDate == nil) && (b.PrincipalAmountPaid.LessThan(b.PrincipalAmount) || b.InterestAmountPaid.LessThan(b.InterestAmount))
 			if isNext {
-				result.NextBillDate = &b.BillDate
+				result.NextBillDate = &billDate
 			}
 
 			// get billed principal amount
-			if b.BillDate.Before(now) {
+			if billDate.Before(now) || billDate.Equal(now) {
 				result.BilledPrincipalAmount = result.BilledPrincipalAmount.Add(b.PrincipalAmount)
 				result.BilledInterestAmount = result.BilledInterestAmount.Add(b.InterestAmount)
 				result.TotalBilledAmount = result.TotalBilledAmount.Add(b.PrincipalAmount).Add(b.InterestAmount)
@@ -288,11 +310,17 @@ func (i *impl) CalculateOutstanding(ctx context.Context, params entity.Calculate
 			}
 
 			// get outstanding principal amount
-			// if b.BillDate.Before(now) {
-			result.OSPrincipalAmount = result.OSPrincipalAmount.Add(b.PrincipalAmount).Sub(b.PrincipalAmountPaid)
-			result.OSInterestAmount = result.OSInterestAmount.Add(b.InterestAmount).Sub(b.InterestAmountPaid)
-			result.TotalOSAmount = result.TotalOSAmount.Add(b.PrincipalAmount).Add(b.InterestAmount)
-			// }
+			result.OSPrincipalAmount = result.OSPrincipalAmount.
+				Add(b.PrincipalAmount).
+				Sub(b.PrincipalAmountPaid)
+			result.OSInterestAmount = result.OSInterestAmount.
+				Add(b.InterestAmount).
+				Sub(b.InterestAmountPaid)
+			result.TotalOSAmount = result.TotalOSAmount.
+				Add(b.PrincipalAmount).
+				Add(b.InterestAmount).
+				Sub(b.PrincipalAmountPaid).
+				Sub(b.InterestAmountPaid)
 		}
 	}
 
@@ -343,7 +371,7 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 			Limit:     9_999_999,
 			Page:      0,
 			OrderBy:   "bill_date",
-			OrderType: "desc",
+			OrderType: "asc",
 		},
 		IsDeleted:              0,
 		UserID:                 params.UserID,
@@ -366,9 +394,11 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 	defer tx.Rollback()
 
 	dLoanBilling := i.dom.LoanBilling.WithTx(ctx, tx)
+	dLoanPayment := i.dom.LoanPayment.WithTx(ctx, tx)
 
 	// calculate amount
 	amount := decimal.NewFromFloat(params.Amount)
+	payments := []entity.LoanPayment{}
 	for i := range billings {
 		b := billings[i]
 		if amount.LessThanOrEqual(decimal.NewFromInt(0)) {
@@ -377,18 +407,36 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 		amount = amount.Sub(b.PrincipalAmount).Sub(b.InterestAmount)
 		b.PrincipalAmountPaid = b.PrincipalAmount
 		b.InterestAmountPaid = b.InterestAmount
+		b.Status = entity.LOAN_BILLING_STATUS_PAID
 		_, err := dLoanBilling.Update(ctx, entity.UpdateLoanBillingParams{
-			LoanTransactionID:   b.LoanTransactionID,
-			BillDate:            b.BillDate,
-			PrincipalAmount:     b.PrincipalAmount,
-			PrincipalAmountPaid: b.PrincipalAmountPaid,
-			InterestAmount:      b.InterestAmount,
-			InterestAmountPaid:  b.InterestAmountPaid,
-			ID:                  b.ID,
+			LoanTransactionID:      b.LoanTransactionID,
+			BillDate:               b.BillDate,
+			PrincipalAmount:        b.PrincipalAmount,
+			PrincipalAmountPaid:    b.PrincipalAmountPaid,
+			InterestAmount:         b.InterestAmount,
+			InterestAmountPaid:     b.InterestAmountPaid,
+			Status:                 b.Status,
+			IsCheckedForDelinquent: b.IsCheckedForDelinquent,
+			ID:                     b.ID,
 		})
 		if err != nil {
 			return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 		}
+
+		p, err := dLoanPayment.Create(ctx, entity.CreateLoanPaymentParams{
+			LoanTransactionID:   b.LoanTransactionID,
+			PrincipalAmount:     b.PrincipalAmount,
+			PrincipalAmountPaid: b.PrincipalAmountPaid,
+			InterestAmount:      b.InterestAmount,
+			InterestAmountPaid:  b.InterestAmountPaid,
+			LoanBillingID:       b.ID,
+		})
+		if err != nil {
+			return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+
+		payments = append(payments, p)
+
 		billings[i] = b
 	}
 
@@ -402,19 +450,20 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
 	}
 
-	lt.LoanBilling = billings
+	lt.LoanBillings = billings
+	lt.LoanPayments = payments
 	return lt, nil
 
 }
 
 // Delete implements Interface.
 func (i *impl) Delete(ctx context.Context, params entity.DeleteLoanTransactionParams) (entity.LoanTransaction, error) {
-	panic("unimplemented")
+	return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeNotImplemented, "not implemented")
 }
 
 // Get implements Interface.
 func (i *impl) Get(ctx context.Context, params entity.GetLoanTransactionParams) (entity.LoanTransaction, error) {
-	panic("unimplemented")
+	return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeNotImplemented, "not implemented")
 }
 
 // List implements Interface.
@@ -429,10 +478,164 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanTransactionParams
 		return []entity.LoanTransaction{}, entity.Pagination{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 	}
 
+	if params.WithPayments {
+		payments, _, err := i.dom.LoanPayment.List(ctx, entity.ListLoanPaymentParams{
+			LoanTransactionIDs: collections.Map(results, func(i int, v entity.LoanTransaction) int64 { return v.ID }),
+			IsDeleted:          0,
+			PaginationParams: entity.PaginationParams{
+				Limit: params.Limit * 9_999_999,
+				Page:  0,
+			},
+		})
+		if err != nil {
+			return []entity.LoanTransaction{}, entity.Pagination{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+
+		mapPayments := map[int64][]entity.LoanPayment{}
+		for _, p := range payments {
+			mapPayments[p.LoanTransactionID] = append(mapPayments[p.LoanTransactionID], p)
+		}
+
+		for i := range results {
+			r := &results[i]
+
+			lp := mapPayments[r.ID]
+			sort.Slice(lp, func(i, j int) bool { return lp[i].ID > lp[j].ID })
+			r.LoanPayments = lp
+		}
+	}
+
 	return results, pagination, nil
 }
 
 // Update implements Interface.
 func (i *impl) Update(ctx context.Context, params entity.UpdateLoanTransactionParams) (entity.LoanTransaction, error) {
-	panic("unimplemented")
+	return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeNotImplemented, "not implemented")
+}
+
+// ScheduleDelinquent implements Interface.
+func (i *impl) ScheduleDelinquent(ctx context.Context) error {
+	// get setting for eod date
+	setting, err := i.dom.Setting.Get(ctx, entity.GetSettingParams{
+		Name:      entity.SETTING_NAME_EOD_DATE,
+		IsDeleted: 0,
+	})
+	if err != nil {
+		if errors.GetCode(err) == codes.CodeSQLRecordDoesNotExist {
+			return errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_EOD_DATE_NOT_FOUND)
+		}
+		return errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	EOD_DATE, err := time.Parse(time.DateOnly, setting.Value)
+	if err != nil {
+		return errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_EOD_DATE_INVALID)
+	}
+
+	// get setting for limit billing for delinquent
+	setting, err = i.dom.Setting.Get(ctx, entity.GetSettingParams{
+		Name:      entity.SETTING_NAME_LIMIT_BILLING_FOR_DELINQUENT,
+		IsDeleted: 0,
+	})
+	if err != nil {
+		if errors.GetCode(err) == codes.CodeSQLRecordDoesNotExist {
+			return errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_LIMIT_BILLING_FOR_DELINQUENT_NOT_FOUND)
+		}
+		return errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	LIMIT_BILLING_FOR_DELINQUENT, err := strconv.Atoi(setting.Value)
+	if err != nil {
+		return errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_LIMIT_BILLING_FOR_DELINQUENT_INVALID)
+	}
+
+	// get loan billing
+	lb, _, err := i.dom.LoanBilling.List(ctx, entity.ListLoanBillingParams{
+		PaginationParams:       entity.PaginationParams{},
+		LoanTransactionID:      0,
+		IsDeleted:              0,
+		BillDateLTE:            EOD_DATE,
+		PrincipalAmountPaidLTE: convert.ToPointer(decimal.NewFromInt(0)),
+		InterestAmountPaidLTE:  convert.ToPointer(decimal.NewFromInt(0)),
+		IsCheckedForDelinquent: 0,
+	})
+	if err != nil {
+		return errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	// map list billing to user id
+	mapLoanBillingsToUserID := make(map[int64][]entity.LoanBilling)
+	for _, b := range lb {
+		mapLoanBillingsToUserID[b.UserID] = append(mapLoanBillingsToUserID[b.UserID], b)
+	}
+
+	// filter user id that have limit billing for delinquent
+	userIds := datastructure.NewSet[int64]()
+	for userID, b := range mapLoanBillingsToUserID {
+		if len(b) >= LIMIT_BILLING_FOR_DELINQUENT {
+			userIds.Add(userID)
+		}
+	}
+
+	// get users
+	users := []entity.User{}
+	if userIds.Size() > 0 {
+		users, _, err = i.dom.User.List(ctx, entity.ListUserParams{
+			PaginationParams: entity.PaginationParams{
+				Limit: 9_999_999,
+			},
+			IsDeleted: 0,
+			IDs:       userIds.Slice(),
+		})
+		if err != nil {
+			return errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+	}
+
+	// start transaction
+	tx, err := i.db.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return errors.NewWithCode(codes.CodeSQLTxBegin, err.Error())
+	}
+	defer tx.Rollback()
+
+	dLoanBilling := i.dom.LoanBilling.WithTx(ctx, tx)
+	dUser := i.dom.User.WithTx(ctx, tx)
+
+	// update loan billing
+	for _, b := range lb {
+		_, err := dLoanBilling.Update(ctx, entity.UpdateLoanBillingParams{
+			LoanTransactionID:      b.LoanTransactionID,
+			BillDate:               b.BillDate,
+			PrincipalAmount:        b.PrincipalAmount,
+			PrincipalAmountPaid:    b.PrincipalAmountPaid,
+			InterestAmount:         b.InterestAmount,
+			InterestAmountPaid:     b.InterestAmountPaid,
+			ID:                     b.ID,
+			IsCheckedForDelinquent: 1,
+		})
+		if err != nil {
+			return errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+	}
+
+	// update users delinquent level
+	for _, user := range users {
+		_, err := dUser.Update(ctx, entity.UpdateUserParams{
+			ID:              user.ID,
+			Name:            user.Name,
+			Email:           user.Email,
+			DelinquentLevel: user.DelinquentLevel + 1,
+		})
+		if err != nil {
+			return errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+	}
+
+	// commit tx
+	if err := tx.Commit(); err != nil {
+		return errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
+	}
+
+	return nil
 }

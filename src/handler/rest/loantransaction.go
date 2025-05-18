@@ -62,3 +62,12 @@ func (r *rest) ListLoanTransaction(c *fiber.Ctx) error {
 
 	return r.httpResSuccess(c, codes.CodeSuccess, results, &pagination)
 }
+
+func (r *rest) ScheduleDelinquent(c *fiber.Ctx) error {
+	err := r.uc.LoanTransaction.ScheduleDelinquent(c.UserContext())
+	if err != nil {
+		return r.httpResError(c, err)
+	}
+
+	return r.httpResSuccess(c, codes.CodeSuccess, "success", nil)
+}

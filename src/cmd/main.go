@@ -71,8 +71,8 @@ func main() {
 
 	// initialize queries
 	q := entitygen.New(sqlc.Wrap(db, sqlc.WrappedOpts{
-		ShowQuery: true,
-		ShowArgs:  true,
+		ShowQuery: false,
+		ShowArgs:  false,
 	}))
 	l.Info(ctx, "Initialize query...")
 

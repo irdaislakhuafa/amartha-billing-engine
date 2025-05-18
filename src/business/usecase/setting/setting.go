@@ -131,7 +131,7 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateSettingParams) (e
 	}
 
 	prev, err := i.dom.Setting.Get(ctx, entity.GetSettingParams{
-		Name:      params.Name,
+		ID:        params.ID,
 		IsDeleted: 0,
 	})
 	if err != nil {
@@ -147,8 +147,8 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateSettingParams) (e
 		return entity.Setting{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 	}
 
-	prev.UpdatedAt = result.UpdatedAt
-	prev.UpdatedBy = result.UpdatedBy
+	result.CreatedAt = prev.CreatedAt
+	result.CreatedBy = prev.CreatedBy
 
-	return prev, nil
+	return result, nil
 }

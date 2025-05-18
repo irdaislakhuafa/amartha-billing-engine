@@ -44,6 +44,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanBillingParams
 		LoanTransactionID:   params.LoanTransactionID,
 		UserID:              params.UserID,
 		BillDate:            params.BillDate,
+		Status:              entity.LOAN_BILLING_STATUS_UNPAID,
 		PrincipalAmount:     params.PrincipalAmount,
 		PrincipalAmountPaid: params.PrincipalAmountPaid,
 		InterestAmount:      params.InterestAmount,
@@ -65,6 +66,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanBillingParams
 		PrincipalAmountPaid: args.PrincipalAmountPaid,
 		InterestAmount:      args.InterestAmount,
 		InterestAmountPaid:  args.InterestAmountPaid,
+		Status:              args.Status,
 		Base: entity.Base{
 			CreatedAt: args.CreatedAt,
 			CreatedBy: args.CreatedBy,
@@ -107,7 +109,18 @@ func (i *impl) Delete(ctx context.Context, params entity.DeleteLoanBillingParams
 // Get implements Interface.
 func (i *impl) Get(ctx context.Context, params entity.GetLoanBillingParams) (entity.LoanBilling, error) {
 	ctx = sqlc.Build(ctx, func(b *sqlc.Builder) {
-		b.And("id = ?", params.ID)
+		if params.ID != 0 {
+			b.And("id = ?", params.ID)
+		}
+
+		if params.UserID != 0 {
+			b.And("user_id = ?", params.UserID)
+		}
+
+		if params.Status != "" {
+			b.And("status = ?", params.Status)
+		}
+
 		b.And("is_deleted = ?", params.IsDeleted)
 	})
 
@@ -135,6 +148,10 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanBillingParams) ([
 		b.And("is_deleted = ?", params.IsDeleted)
 		if params.LoanTransactionID != 0 {
 			b.And("loan_transaction_id = ?", params.LoanTransactionID)
+		}
+
+		if params.IsCheckedForDelinquent != 0 {
+			b.And("is_checked_for_delinquent = ?", params.IsCheckedForDelinquent)
 		}
 
 		if params.IsDeleted != 0 {
@@ -213,15 +230,17 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanBillingParams) ([
 // Update implements Interface.
 func (i *impl) Update(ctx context.Context, params entity.UpdateLoanBillingParams) (entity.LoanBilling, error) {
 	args := entitygen.UpdateLoanBillingParams{
-		LoanTransactionID:   params.LoanTransactionID,
-		BillDate:            params.BillDate,
-		PrincipalAmount:     params.PrincipalAmount,
-		PrincipalAmountPaid: params.PrincipalAmountPaid,
-		InterestAmount:      params.InterestAmount,
-		InterestAmountPaid:  params.InterestAmountPaid,
-		UpdatedAt:           sql.NullTime{Time: time.Now(), Valid: true},
-		UpdatedBy:           sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
-		ID:                  params.ID,
+		LoanTransactionID:      params.LoanTransactionID,
+		BillDate:               params.BillDate,
+		PrincipalAmount:        params.PrincipalAmount,
+		PrincipalAmountPaid:    params.PrincipalAmountPaid,
+		InterestAmount:         params.InterestAmount,
+		InterestAmountPaid:     params.InterestAmountPaid,
+		IsCheckedForDelinquent: params.IsCheckedForDelinquent,
+		Status:                 params.Status,
+		UpdatedAt:              sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedBy:              sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
+		ID:                     params.ID,
 	}
 
 	_, err := i.queries.UpdateLoanBilling(ctx, args)
@@ -230,12 +249,14 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateLoanBillingParams
 	}
 
 	result := entity.LoanBilling{
-		LoanTransactionID:   args.LoanTransactionID,
-		BillDate:            args.BillDate,
-		PrincipalAmount:     args.PrincipalAmount,
-		PrincipalAmountPaid: args.PrincipalAmountPaid,
-		InterestAmount:      args.InterestAmount,
-		InterestAmountPaid:  args.InterestAmountPaid,
+		LoanTransactionID:      args.LoanTransactionID,
+		BillDate:               args.BillDate,
+		PrincipalAmount:        args.PrincipalAmount,
+		PrincipalAmountPaid:    args.PrincipalAmountPaid,
+		InterestAmount:         args.InterestAmount,
+		InterestAmountPaid:     args.InterestAmountPaid,
+		IsCheckedForDelinquent: args.IsCheckedForDelinquent,
+		Status:                 args.Status,
 		Base: entity.Base{
 			ID:        args.ID,
 			UpdatedAt: convert.SQLNullTimeToNil(args.UpdatedAt),
@@ -256,13 +277,15 @@ func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
 
 func (i *impl) rowToEntity(row entitygen.LoanBilling) (entity.LoanBilling, error) {
 	result := entity.LoanBilling{
-		LoanTransactionID:   row.LoanTransactionID,
-		BillDate:            row.BillDate,
-		UserID:              row.UserID,
-		PrincipalAmount:     row.PrincipalAmount,
-		PrincipalAmountPaid: row.PrincipalAmountPaid,
-		InterestAmount:      row.InterestAmount,
-		InterestAmountPaid:  row.InterestAmountPaid,
+		LoanTransactionID:      row.LoanTransactionID,
+		BillDate:               row.BillDate,
+		UserID:                 row.UserID,
+		PrincipalAmount:        row.PrincipalAmount,
+		PrincipalAmountPaid:    row.PrincipalAmountPaid,
+		InterestAmount:         row.InterestAmount,
+		InterestAmountPaid:     row.InterestAmountPaid,
+		IsCheckedForDelinquent: row.IsCheckedForDelinquent,
+		Status:                 row.Status,
 		Base: entity.Base{
 			ID:        row.ID,
 			CreatedAt: row.CreatedAt,

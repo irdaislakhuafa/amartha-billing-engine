@@ -37,5 +37,6 @@ type (
 )
 
 const (
-	SETTING_NAME_EOD_DATE = "eod_date"
+	SETTING_NAME_EOD_DATE                     = "eod_date"
+	SETTING_NAME_LIMIT_BILLING_FOR_DELINQUENT = "limit_billing_for_delinquent"
 )

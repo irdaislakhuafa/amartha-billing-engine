@@ -103,6 +103,11 @@ func (i *impl) List(ctx context.Context, params entity.ListUserParams) ([]entity
 			params.Search = "%" + params.Search + "%"
 			b.And("(name LIKE ? OR email LIKE ?)", params.Search, params.Search)
 		}
+
+		if len(params.IDs) > 0 {
+			_, args := sqlc.GenQueryArgs(ctx, params.IDs...)
+			b.In("id", args...)
+		}
 	})
 
 	rows, err := i.queries.ListUser(sqlc.Build(ctx, func(b *sqlc.Builder) {
@@ -138,9 +143,10 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateUserParams) (enti
 		Name:  params.Name,
 		Email: params.Email,
 		// Password:  params.Password,
-		ID:        params.ID,
-		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
-		UpdatedBy: sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
+		ID:              params.ID,
+		DelinquentLevel: int32(params.DelinquentLevel),
+		UpdatedAt:       sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedBy:       sql.NullString{String: convert.ToSafeValue[string](ctx.Value(ctxkey.USER_ID)), Valid: true},
 	}
 
 	_, err := i.queries.UpdateUser(ctx, args)
@@ -149,8 +155,9 @@ func (i *impl) Update(ctx context.Context, params entity.UpdateUserParams) (enti
 	}
 
 	result := entity.User{
-		Name:  args.Name,
-		Email: args.Email,
+		Name:            args.Name,
+		Email:           args.Email,
+		DelinquentLevel: int(args.DelinquentLevel),
 		// Password: args.Password,
 		Base: entity.Base{
 			ID:        args.ID,

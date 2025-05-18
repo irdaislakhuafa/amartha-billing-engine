@@ -135,6 +135,9 @@ func (i *impl) Get(ctx context.Context, params entity.GetLoanTransactionParams) 
 
 	row, err := i.queries.GetLoanTransaction(ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLRecordDoesNotExist, err.Error())
+		}
 		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxExec, err.Error())
 	}
 

@@ -1,6 +1,7 @@
 package scheduller
 
 import (
+	"context"
 	"sync"
 
 	"github.com/go-co-op/gocron/v2"
@@ -48,10 +49,10 @@ func (s *scheduller) Run() {
 }
 
 func (s *scheduller) Register() {
-	// print hello world every 1 second
-	// s.cron.NewJob(gocron.DurationJob(time.Second), gocron.NewTask(func() {
-	// 	s.log.Debug(context.Background(), "Hello World")
-	// }))
+	// update level delinquent user every day at 00:00
+	s.cron.NewJob(gocron.CronJob("0 0 * * * *", true), gocron.NewTask(func() {
+		s.uc.LoanTransaction.ScheduleDelinquent(context.Background())
+	}))
 }
 
 func (s *scheduller) Close() error {

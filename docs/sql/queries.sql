@@ -60,6 +60,7 @@ SELECT COUNT(`id`) AS `total` FROM `users`;
 UPDATE `users` SET
   `name` = ?,
   `email` = ?,
+  `delinquent_level` = ?,
   `updated_at` = ?,
   `updated_by` = ?
 WHERE `id` = ?;
@@ -120,13 +121,14 @@ INSERT INTO `loan_billings` (
   `loan_transaction_id`, 
   `user_id`, 
   `bill_date`, 
+  `status`,
   `principal_amount`, 
   `principal_amount_paid`, 
   `interest_amount`, 
   `interest_amount_paid`, 
   `created_at`, 
   `created_by`
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetLoanBilling :one
 SELECT * FROM `loan_billings`;
@@ -141,10 +143,12 @@ SELECT COUNT(`id`) AS `total` FROM `loan_billings`;
 UPDATE `loan_billings` SET
   `loan_transaction_id` = ?,
   `bill_date` = ?,
+  `status` = ?,
   `principal_amount` = ?,
   `principal_amount_paid` = ?,
   `interest_amount` = ?,
   `interest_amount_paid` = ?,
+  `is_checked_for_delinquent` = ?,
   `updated_at` = ?,
   `updated_by` = ?
 WHERE `id` = ?;
@@ -195,13 +199,14 @@ WHERE `id` = ?;
 -- name: CreateLoanPayment :execresult
 INSERT INTO `loan_payments` (
   `loan_transaction_id`, 
+  `loan_billing_id`, 
   `principal_amount`, 
   `principal_amount_paid`, 
   `interest_amount`, 
   `interest_amount_paid`, 
   `created_at`, 
   `created_by`
-) VALUES (?, ?, ?, ?, ?, ?, ?);
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetLoanPayment :one
 SELECT * FROM `loan_payments`;
@@ -215,6 +220,7 @@ SELECT COUNT(`id`) AS `total` FROM `loan_payments`;
 -- name: UpdateLoanPayment :execresult
 UPDATE `loan_payments` SET
   `loan_transaction_id` = ?,
+  `loan_billing_id` = ?,
   `principal_amount` = ?,
   `principal_amount_paid` = ?,
   `interest_amount` = ?,

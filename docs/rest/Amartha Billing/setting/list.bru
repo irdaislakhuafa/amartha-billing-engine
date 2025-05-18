@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/v1/settings?order_by=id&order_type=desc&page=0&limit=15&search=eod
+  url: {{base_url}}/api/v1/settings?order_by=id&order_type=desc&page=0&limit=15
   body: none
   auth: inherit
 }
@@ -15,7 +15,7 @@ params:query {
   order_type: desc
   page: 0
   limit: 15
-  search: eod
+  ~search: eod
 }
 
 body:json {

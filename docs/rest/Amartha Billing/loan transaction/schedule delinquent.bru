@@ -1,19 +1,19 @@
 meta {
-  name: pay
+  name: schedule delinquent
   type: http
-  seq: 3
+  seq: 5
 }
 
 post {
-  url: {{base_url}}/api/v1/loan/transaction/pay
+  url: {{base_url}}/api/v1/loan/transaction/schedule-delinquent
   body: json
   auth: inherit
 }
 
 body:json {
   {
-    "loan_transaction_id": 4,
-    "amount": 1100000,
+    "loan_transaction_id": 8,
+    "amount": 110000,
     "user_id": 1
   }
 }

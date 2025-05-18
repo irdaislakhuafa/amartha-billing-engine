@@ -5,9 +5,18 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/v1/loan/transactions
+  url: {{base_url}}/api/v1/loan/transactions?order_by=id&order_type=desc&limit=15&page=0&loan_ids=1,2&with_payments=true
   body: none
   auth: inherit
+}
+
+params:query {
+  order_by: id
+  order_type: desc
+  limit: 15
+  page: 0
+  loan_ids: 1,2
+  with_payments: true
 }
 
 docs {

@@ -36,16 +36,18 @@ type (
 	}
 
 	ListLoanTransactionParams struct {
-		Invoices  []string `db:"invoices" json:"invoices" form:"invoices" params:"invoices" query:"invoices"`
-		UserIDs   []int64  `db:"user_ids" json:"user_ids" form:"user_ids" params:"user_ids" query:"user_ids"`
-		LoanIDs   []int64  `db:"loan_ids" json:"loan_ids" form:"loan_ids" params:"loan_ids" query:"loan_ids"`
-		IsDeleted int8     `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted"`
+		Invoices     []string `db:"invoices" json:"invoices" form:"invoices" params:"invoices" query:"invoices"`
+		UserIDs      []int64  `db:"user_ids" json:"user_ids" form:"user_ids" params:"user_ids" query:"user_ids"`
+		LoanIDs      []int64  `db:"loan_ids" json:"loan_ids" form:"loan_ids" params:"loan_ids" query:"loan_ids"`
+		IsDeleted    int8     `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted"`
+		WithPayments bool     `db:"with_payments" json:"with_payments" form:"with_payments" params:"with_payments" query:"with_payments"`
 		PaginationParams
 	}
 
 	GetLoanTransactionParams struct {
 		ID        int64 `db:"id" json:"id" form:"id" params:"id" query:"id" validate:"required"`
 		IsDeleted int8  `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted" validate:""`
+		UserID    int64 `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:""`
 	}
 
 	CalculateOutstandingLoanTransactionParams struct {
@@ -86,7 +88,8 @@ type (
 		Base
 
 		// related entity
-		LoanBilling []LoanBilling `db:"loan_billing" json:"loan_billing,omitempty"`
+		LoanBillings []LoanBilling `db:"loan_billings" json:"loan_billings,omitempty"`
+		LoanPayments []LoanPayment `db:"loan_payment" json:"loan_payment,omitempty"`
 	}
 )
 

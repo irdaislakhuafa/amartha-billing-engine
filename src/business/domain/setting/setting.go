@@ -3,11 +3,13 @@ package setting
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/entity"
 	entitygen "github.com/irdaislakhuafa/amartha-billing-engine/src/entity/gen"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/ctxkey"
+	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/errmessages"
 	"github.com/irdaislakhuafa/go-sdk/codes"
 	"github.com/irdaislakhuafa/go-sdk/convert"
 	"github.com/irdaislakhuafa/go-sdk/errors"
@@ -48,6 +50,9 @@ func (i *impl) Create(ctx context.Context, params entity.CreateSettingParams) (e
 
 	setting, err := i.queries.CreateSetting(ctx, args)
 	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate entry") {
+			return entity.Setting{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_ALREADY_EXISTS)
+		}
 		return entity.Setting{}, err
 	}
 
@@ -100,6 +105,9 @@ func (i *impl) Get(ctx context.Context, params entity.GetSettingParams) (entity.
 		b.And("is_deleted = ?", params.IsDeleted)
 	}))
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.Setting{}, errors.NewWithCode(codes.CodeSQLRecordDoesNotExist, errmessages.SETTING_NOT_FOUND)
+		}
 		return entity.Setting{}, errors.NewWithCode(codes.CodeSQLTxExec, err.Error())
 	}
 

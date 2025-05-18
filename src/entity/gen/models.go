@@ -47,7 +47,10 @@ type LoanBilling struct {
 	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
 	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
 	// refer to users.id
-	UserID int64 `db:"user_id" json:"user_id"`
+	UserID                 int64 `db:"user_id" json:"user_id"`
+	IsCheckedForDelinquent int8  `db:"is_checked_for_delinquent" json:"is_checked_for_delinquent"`
+	// unpaid, paid
+	Status string `db:"status" json:"status"`
 }
 
 type LoanDelinquentHistory struct {
@@ -81,6 +84,8 @@ type LoanPayment struct {
 	DeletedAt           sql.NullTime    `db:"deleted_at" json:"deleted_at"`
 	DeletedBy           sql.NullString  `db:"deleted_by" json:"deleted_by"`
 	IsDeleted           int8            `db:"is_deleted" json:"is_deleted"`
+	// refer to loan_billings.id
+	LoanBillingID int64 `db:"loan_billing_id" json:"loan_billing_id"`
 }
 
 type LoanTransaction struct {

@@ -42,6 +42,7 @@ func Init(log log.Interface, queries *entitygen.Queries) Interface {
 func (i *impl) Create(ctx context.Context, params entity.CreateLoanPaymentParams) (entity.LoanPayment, error) {
 	args := entitygen.CreateLoanPaymentParams{
 		LoanTransactionID:   params.LoanTransactionID,
+		LoanBillingID:       params.LoanBillingID,
 		PrincipalAmount:     params.PrincipalAmount,
 		PrincipalAmountPaid: params.PrincipalAmountPaid,
 		InterestAmount:      params.InterestAmount,
@@ -57,6 +58,7 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanPaymentParams
 
 	result := entity.LoanPayment{
 		LoanTransactionID:   args.LoanTransactionID,
+		LoanBillingID:       args.LoanBillingID,
 		PrincipalAmount:     args.PrincipalAmount,
 		PrincipalAmountPaid: args.PrincipalAmountPaid,
 		InterestAmount:      args.InterestAmount,
@@ -131,36 +133,36 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanPaymentParams) ([
 		b.And("is_deleted = ?", params.IsDeleted)
 		if len(params.IDs) > 0 {
 			_, args := sqlc.GenQueryArgs(ctx, params.IDs...)
-			b.In("id", args)
+			b.In("id", args...)
 		}
 		if len(params.LoanTransactionIDs) > 0 {
 			_, args := sqlc.GenQueryArgs(ctx, params.LoanTransactionIDs...)
-			b.In("loan_transaction_id", args)
+			b.In("loan_transaction_id", args...)
 		}
 
-		if !params.PrincipalAmountGTE.IsZero() {
-			b.And("principal_amount >= ?", params.PrincipalAmountGTE)
+		if params.PrincipalAmountGTE != nil {
+			b.And("principal_amount >= ?", *params.PrincipalAmountGTE)
 		}
-		if !params.PrincipalAmountLTE.IsZero() {
-			b.And("principal_amount <= ?", params.PrincipalAmountLTE)
+		if params.PrincipalAmountLTE != nil {
+			b.And("principal_amount <= ?", *params.PrincipalAmountLTE)
 		}
-		if !params.PrincipalAmountPaidGTE.IsZero() {
-			b.And("principal_amount_paid >= ?", params.PrincipalAmountPaidGTE)
+		if params.PrincipalAmountPaidGTE != nil {
+			b.And("principal_amount_paid >= ?", *params.PrincipalAmountPaidGTE)
 		}
-		if !params.PrincipalAmountPaidLTE.IsZero() {
-			b.And("principal_amount_paid <= ?", params.PrincipalAmountPaidLTE)
+		if params.PrincipalAmountPaidLTE != nil {
+			b.And("principal_amount_paid <= ?", *params.PrincipalAmountPaidLTE)
 		}
-		if !params.InterestAmountGTE.IsZero() {
-			b.And("interest_amount >= ?", params.InterestAmountGTE)
+		if params.InterestAmountGTE != nil {
+			b.And("interest_amount >= ?", *params.InterestAmountGTE)
 		}
-		if !params.InterestAmountLTE.IsZero() {
-			b.And("interest_amount <= ?", params.InterestAmountLTE)
+		if params.InterestAmountLTE != nil {
+			b.And("interest_amount <= ?", *params.InterestAmountLTE)
 		}
-		if !params.InterestAmountPaidGTE.IsZero() {
-			b.And("interest_amount_paid >= ?", params.InterestAmountPaidGTE)
+		if params.InterestAmountPaidGTE != nil {
+			b.And("interest_amount_paid >= ?", *params.InterestAmountPaidGTE)
 		}
-		if !params.InterestAmountPaidLTE.IsZero() {
-			b.And("interest_amount_paid <= ?", params.InterestAmountPaidLTE)
+		if params.InterestAmountPaidLTE != nil {
+			b.And("interest_amount_paid <= ?", *params.InterestAmountPaidLTE)
 		}
 	})
 
@@ -237,6 +239,7 @@ func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
 func (i *impl) rowToEntity(row entitygen.LoanPayment) (entity.LoanPayment, error) {
 	result := entity.LoanPayment{
 		LoanTransactionID:   row.LoanTransactionID,
+		LoanBillingID:       row.LoanBillingID,
 		PrincipalAmount:     row.PrincipalAmount,
 		PrincipalAmountPaid: row.PrincipalAmountPaid,
 		InterestAmount:      row.InterestAmount,

@@ -18,13 +18,15 @@ type (
 	}
 
 	UpdateLoanBillingParams struct {
-		LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id" form:"loan_transaction_id" params:"loan_transaction_id" query:"loan_transaction_id" validate:"required"`
-		BillDate            time.Time       `db:"bill_date" json:"bill_date" form:"bill_date" params:"bill_date" query:"bill_date" validate:"required"`
-		PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount" form:"principal_amount" params:"principal_amount" query:"principal_amount" validate:"required"`
-		PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid" form:"principal_amount_paid" params:"principal_amount_paid" query:"principal_amount_paid" validate:"required"`
-		InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount" form:"interest_amount" params:"interest_amount" query:"interest_amount" validate:"required"`
-		InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid" form:"interest_amount_paid" params:"interest_amount_paid" query:"interest_amount_paid" validate:"required"`
-		ID                  int64           `db:"id" json:"id" form:"id" params:"id" query:"id" validate:"required"`
+		LoanTransactionID      int64           `db:"loan_transaction_id" json:"loan_transaction_id" form:"loan_transaction_id" params:"loan_transaction_id" query:"loan_transaction_id" validate:"required"`
+		BillDate               time.Time       `db:"bill_date" json:"bill_date" form:"bill_date" params:"bill_date" query:"bill_date" validate:"required"`
+		PrincipalAmount        decimal.Decimal `db:"principal_amount" json:"principal_amount" form:"principal_amount" params:"principal_amount" query:"principal_amount" validate:"required"`
+		PrincipalAmountPaid    decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid" form:"principal_amount_paid" params:"principal_amount_paid" query:"principal_amount_paid" validate:"required"`
+		InterestAmount         decimal.Decimal `db:"interest_amount" json:"interest_amount" form:"interest_amount" params:"interest_amount" query:"interest_amount" validate:"required"`
+		InterestAmountPaid     decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid" form:"interest_amount_paid" params:"interest_amount_paid" query:"interest_amount_paid" validate:"required"`
+		IsCheckedForDelinquent int8            `db:"is_checked_for_delinquent" json:"is_checked_for_delinquent" form:"is_checked_for_delinquent" params:"is_checked_for_delinquent" query:"is_checked_for_delinquent" validate:""`
+		Status                 string          `db:"status" json:"status" form:"status" params:"status" query:"status" validate:""`
+		ID                     int64           `db:"id" json:"id" form:"id" params:"id" query:"id" validate:"required"`
 	}
 
 	DeleteLoanBillingParams struct {
@@ -33,8 +35,10 @@ type (
 	}
 
 	GetLoanBillingParams struct {
-		ID        int64 `db:"id" json:"id" form:"id" params:"id" query:"id" validate:"required"`
-		IsDeleted int8  `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted" validate:""`
+		ID        int64  `db:"id" json:"id" form:"id" params:"id" query:"id" validate:"required"`
+		IsDeleted int8   `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted" validate:""`
+		UserID    int64  `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:""`
+		Status    string `db:"status" json:"status" form:"status" params:"status" query:"status" validate:""`
 	}
 
 	ListLoanBillingParams struct {
@@ -52,6 +56,7 @@ type (
 		InterestAmountPaidGTE  *decimal.Decimal `db:"interest_amount_paid_gte" json:"interest_amount_paid_gte" form:"interest_amount_paid_gte" params:"interest_amount_paid_gte" query:"interest_amount_paid_gte" validate:""`
 		InterestAmountPaidLTE  *decimal.Decimal `db:"interest_amount_paid_lte" json:"interest_amount_paid_lte" form:"interest_amount_paid_lte" params:"interest_amount_paid_lte" query:"interest_amount_paid_lte" validate:""`
 		UserID                 int64            `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:""`
+		IsCheckedForDelinquent int8             `db:"is_checked_for_delinquent" json:"is_checked_for_delinquent" form:"is_checked_for_delinquent" params:"is_checked_for_delinquent" query:"is_checked_for_delinquent" validate:""`
 	}
 
 	GetLoanPaymentParams struct {
@@ -61,13 +66,20 @@ type (
 
 	LoanBilling struct {
 		// refer to loan_transactions.id
-		LoanTransactionID   int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
-		BillDate            time.Time       `db:"bill_date" json:"bill_date"`
-		PrincipalAmount     decimal.Decimal `db:"principal_amount" json:"principal_amount"`
-		PrincipalAmountPaid decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
-		InterestAmount      decimal.Decimal `db:"interest_amount" json:"interest_amount"`
-		InterestAmountPaid  decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
-		UserID              int64           `db:"user_id" json:"user_id"`
+		LoanTransactionID      int64           `db:"loan_transaction_id" json:"loan_transaction_id"`
+		BillDate               time.Time       `db:"bill_date" json:"bill_date"`
+		PrincipalAmount        decimal.Decimal `db:"principal_amount" json:"principal_amount"`
+		PrincipalAmountPaid    decimal.Decimal `db:"principal_amount_paid" json:"principal_amount_paid"`
+		InterestAmount         decimal.Decimal `db:"interest_amount" json:"interest_amount"`
+		InterestAmountPaid     decimal.Decimal `db:"interest_amount_paid" json:"interest_amount_paid"`
+		UserID                 int64           `db:"user_id" json:"user_id"`
+		IsCheckedForDelinquent int8            `db:"is_checked_for_delinquent" json:"is_checked_for_delinquent"`
+		Status                 string          `db:"status" json:"status"`
 		Base
 	}
+)
+
+const (
+	LOAN_BILLING_STATUS_UNPAID = "unpaid"
+	LOAN_BILLING_STATUS_PAID   = "paid"
 )

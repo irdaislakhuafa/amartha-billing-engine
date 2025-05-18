@@ -11,11 +11,11 @@ get {
 }
 
 params:path {
-  user_id: 10
+  user_id: 1
 }
 
 docs {
-  # Request
+  # Response
   ## Body
   ```json
   {
@@ -28,20 +28,41 @@ docs {
       "statusCode": 200,
       "statusStr": "OK",
       "message": "GET http://127.0.0.1:8001/api/v1/loan/transaction/calculate/1 200 OK",
-      "timestamp": "2025-05-17T22:35:20+07:00",
+      "timestamp": "2025-05-18T23:26:36+07:00",
       "error": null,
-      "requestId": "acb01d62-4e90-4ce3-b69f-2ab996436b1a"
+      "requestId": "ec4a40fd-ccca-4728-a6a2-a318fcbbc279"
     },
     "data": {
-      "current_bill_date": null,
-      "next_bill_date": "2025-05-24T00:00:00Z",
-      "billed_principal_amount": "0",
-      "billed_interest_amount": "0",
-      "total_billed_amount": "0",
+      "current_bill_date": "2025-05-25T00:00:00Z",
+      "next_bill_date": "2025-06-01T00:00:00Z",
+      "billed_principal_amount": "1000000",
+      "billed_interest_amount": "100000",
+      "total_billed_amount": "1100000",
       "total_paid_amount": "0",
       "os_principal_amount": "5000000",
       "os_interest_amount": "500000",
-      "total_os_amount": "5500000"
+      "total_os_amount": "5500000",
+      "list_billed_billing": [
+        {
+          "loan_transaction_id": 4,
+          "bill_date": "2025-05-25T00:00:00Z",
+          "principal_amount": "1000000",
+          "principal_amount_paid": "0",
+          "interest_amount": "100000",
+          "interest_amount_paid": "0",
+          "user_id": 1,
+          "is_checked_for_delinquent": 0,
+          "status": "unpaid",
+          "id": 61,
+          "created_at": "2025-05-18T16:09:08Z",
+          "created_by": "",
+          "updated_at": null,
+          "updated_by": null,
+          "deleted_at": null,
+          "deleted_by": null,
+          "is_deleted": 0
+        }
+      ]
     }
   }
   ```
