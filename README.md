@@ -1,6 +1,8 @@
 # Overview
 This is Amartha Billing Engine that provide billing services for loaning. This project is an assignment for me as test from Amartha for Senior/Principal Engineer position.
 
+This project is built with my SDK for Go Development [go-sdk](https://github.com/irdaislakhuafa/go-sdk).
+
 ## Usages
 This app use docker as container so it's easy to deploy, you don't need to configure anything if you already have docker installed in your machine.
 
