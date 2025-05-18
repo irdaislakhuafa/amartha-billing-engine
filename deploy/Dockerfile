@@ -1,7 +1,8 @@
 FROM golang:1.24.0-alpine AS builder
 WORKDIR /build
+ARG ENV=dev
 COPY . .
-RUN cat etc/cfg/conf.dev.json > etc/cfg/conf.json && go build -o main src/cmd/main.go
+RUN cat etc/cfg/conf.${ENV}.json > etc/cfg/conf.json && go build -o main src/cmd/main.go
 
 FROM alpine:latest AS runner
 WORKDIR /app

@@ -1,11 +1,5 @@
 # Overview
-A Project Starter for https://github.com/irdaislakhuafa/go-sdk.git.
-
-This project includes setup for:
-- SQL Query Builder using [sqlc](https://sqlc.dev/)
-- SMTP Client using [gomail](https://github.com/go-gomail/gomail)
-- Rest API Server with [fiber](https://github.com/gofiber/fiber)
-- SDK Library from [go-sdk](https://github.com/irdaislakhuafa/go-sdk)
+This is Amartha Billing Engine that provide billing services for loaning. This project is an assignment for me as test from Amartha for Senior/Principal Engineer position.
 
 ## Project Structure
 ```bash
