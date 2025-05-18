@@ -126,7 +126,10 @@ func (i *impl) Get(ctx context.Context, params entity.GetLoanBillingParams) (ent
 
 	row, err := i.queries.GetLoanBilling(ctx)
 	if err != nil {
-		return entity.LoanBilling{}, errors.NewWithCode(codes.CodeSQLTxExec, err.Error())
+		if err == sql.ErrNoRows {
+			return entity.LoanBilling{}, errors.NewWithCode(codes.CodeSQLRecordDoesNotExist, err.Error())
+		}
+		return entity.LoanBilling{}, errors.NewWithCode(codes.CodeSQLRead, err.Error())
 	}
 
 	result, err := i.rowToEntity(row)

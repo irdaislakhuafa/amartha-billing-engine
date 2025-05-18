@@ -7,7 +7,11 @@ meta {
 post {
   url: {{base_url}}/api/v1/loan/transactions
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOjEsImV4cCI6MTc1MDE4MDgxNH0.21reHzJuu_5AlXUzwnmJzDOv23vUTZ4UwcPhcMcF4W0
 }
 
 body:json {

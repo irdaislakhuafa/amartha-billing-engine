@@ -7,19 +7,23 @@ meta {
 post {
   url: {{base_url}}/api/v1/settings
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOjEsImV4cCI6MTc1MDE4MTgxNn0.L2nLVqa_KNpMqsSh5MGiVpEvTWWrnXw-luepCdKi_EY
 }
 
 body:json {
-  //{
-  //  "name": "limit_billing_for_delinquent",
-  //  "value": "2"
-  //}
-  
   {
-   "name": "eod_date",
-    "value": "2025-05-18"
+    "name": "limit_billing_for_delinquent",
+    "value": "2"
   }
+  
+  //{
+  // "name": "eod_date",
+  //  "value": "2025-04-18"
+  //}
 }
 
 docs {

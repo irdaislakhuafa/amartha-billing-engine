@@ -1,6 +1,42 @@
 # Overview
 This is Amartha Billing Engine that provide billing services for loaning. This project is an assignment for me as test from Amartha for Senior/Principal Engineer position.
 
+## Usages
+This app use docker as container so it's easy to deploy, you don't need to configure anything if you already have docker installed in your machine.
+
+### Installation
+Just run the following command in your terminal
+```bash
+$ docker compose up -d
+```
+Then wait until app is ready.
+
+### API Docs
+- Get Outstanding: `GET /api/v1/loan/transaction/calculate/:user_id`
+- Is Delinquent: `GET /api/v1/users/:id`. Users have flag `deliquent_level` to identify they are delinquent or not.
+- Make Payment: `POST /api/v1/loan/transaction/pay`
+
+You can see full API docs in `docs/rest/Amartha Billing` directory. You can use [bruno](https://www.usebruno.com/) to open it. [Bruno](https://www.usebruno.com/) is a Postman alternative that fully free and open source.
+
+
+### Demo for Loan and Pay loan bill
+[Click Demo as Video Here](https://drive.google.com/file/d/1Dz3v0cPRlJah58pkyGK4OzHickxUfzCB/view?usp=sharing)
+Below is a flow that used on demo video.
+- Flow Admin
+1. Create Loan plan
+2. Setup Setting for `eod_date` and `limit_billing_for_delinquent`
+
+- Flow User
+1. Register
+2. Login and use `token` on `Authorization` header
+3. Create loan transaction
+4. Check outstanding loan before billing
+5. Then admin should update `eod_date` to next bill date
+6. Check outstanding loan after billing
+7. Pay loan transaction
+
+
+
 ## Project Structure
 ```bash
 .
@@ -34,90 +70,3 @@ This is Amartha Billing Engine that provide billing services for loaning. This p
         ├── pagination -- code collections to implement paginations.
         └── validation -- code collections for validation purpose.
 ```
-
-## Usages
-Below is usage docs for this project.
-
-- [Installation](#installation)
-- [Development](#development)
-- [Run and Build](#run-and-build)
-
-### Installation
-
-A simple way to using this project, you just need to clone this project and custom setup based on your purpose.
-```bash
-$ git clone https://github.com/irdaislakhuafa/amartha-billing-engine.git
-```
-
-### Development
-Big Thanks for [nix](https://github.com/NixOS/nix) and [nixpkgs](https://github.com/NixOS/nixpkgs) the awesome project for developer.
-
-This project includes bundle with development tools for Go project:
-- [helix](https://github.com/helix-editor/helix): A simple code editor but powerfull like vim/neovim.
-- [gopls](https://github.com/golang/tools/tree/master/gopls): Golang language server protocol that provide auto completion and etc.
-- [gotools](https://go.googlesource.com/tools): Golang tools collection for development that provide formatter, auto import and etc. 
-- [go](https://github.com/golang/go): Golang compiler with version 1.24.
-- [simple-completion-language-server](https://github.com/estin/simple-completion-language-server): A language server for text buffer.
-
-#### Full Setup
-Full setup contains all tools above for development. For usage you need to install [nix](https://github.com/NixOS/nix) package manager first. Then just type below:
-
-```bash
-$ nix develop .#ide
-```
-
-And [nix](https://github.com/NixOS/nix) will setup development environment for Go and you ready to develop your app without any effort to setup compiler or etc.
-
-### Minimal Setup
-May you need minimal setup if you:
-- already have own `go` compiler installed.
-- want to use your own `ide` or `code editor`.
-- don't need auto complete for plain text from buffer.
-
-And just need a minimal setup to develop your Go app you can type.
-
-```bash
-$ nix develop .#ide-minimal
-```
-
-This setup only contains:
-- `gopls`
-- `gotools`
-
-
-After that you can open your project using `helix`.
-```bash
-$ hx .
-```
-
-Or using any IDE that you like.
-
-### Run and Build
-Build your app.
-```bash
-$ go build -o main ./src/cmd/main.go
-```
-
-Run the app.
-```bash
-$ ./main
-```
-
-Build with docker.
-```bash
-$ docker compose up app-dev -d
-```
-or
-```bash
-$ docker compose up app-prod -d
-```
-Depends about your [docker-compose](./docker-compose.yaml) configurations.
-
-## Todo
-
-- [x] Setup nix flake
-- [x] Setup SQL Query Builder using sqlc.
-- [x] Setup for Rest API
-- [ ] Setup for GraphQL
-- [ ] Setup for gRPC 
-- [x] Setup for Minio Object Storage
