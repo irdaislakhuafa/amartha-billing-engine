@@ -106,6 +106,7 @@ ALTER TABLE `users` ADD COLUMN `delinquent_level` INT NOT NULL DEFAULT 0 AFTER `
 ALTER TABLE `loan_billings` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT "refer to users.id" AFTER `loan_transaction_id`;
 -- ALTER TABLE `loan_payments` ADD COLUMN `user_id` BIGINT NOT NULL COMMENT "refer to users.id" AFTER `loan_transaction_id`;
 
+-- settings
 CREATE TABLE `settings` (
     `id` BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
@@ -118,3 +119,5 @@ CREATE TABLE `settings` (
     `deleted_by` VARCHAR(255) NULL,
     `is_deleted` TINYINT NOT NULL DEFAULT 0
 );
+
+-- ALTER TABLE `loan_transactions` ADD COLUMN `status` VARCHAR(255) NOT NULL DEFAULT 'unpaid' COMMENT 'unpaid, paid' AFTER `user_id`;

@@ -18,5 +18,7 @@ const (
 	SETTING_NOT_FOUND        = "setting not found"
 	SETTING_EOD_DATE_INVALID = "setting eod date invalid"
 
+	LOAN_BILLING_NOT_FOUND = "loan billing not found"
+
 	TRANSACTION_AMOUNT_NOT_MATCH = "the amount paid does not match, amount can't be less than or greater than the outstanding amount"
 )

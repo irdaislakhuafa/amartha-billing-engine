@@ -22,11 +22,14 @@ func (r *rest) RegisterRoutes() {
 		v1.Delete("/users/:id/:is_deleted", r.authJWT, r.DeleteUser)
 
 		v1.Post("/loan/transactions", r.authJWT, r.CreateLoanTransaction)
+		v1.Get("/loan/transactions", r.authJWT, r.ListLoanTransaction)
 		v1.Get("/loan/transaction/calculate/:user_id", r.authJWT, r.CalculateOutstandingLoanTransaction)
+		v1.Post("/loan/transaction/pay", r.authJWT, r.PayLoanTransaction)
 
 		v1.Post("/settings", r.authJWT, r.CreateSetting)
 		v1.Get("/settings", r.authJWT, r.ListSetting)
 		v1.Put("/settings", r.authJWT, r.UpdateSetting)
 		v1.Get("/settings/:id", r.authJWT, r.GetSetting)
+
 	}
 }

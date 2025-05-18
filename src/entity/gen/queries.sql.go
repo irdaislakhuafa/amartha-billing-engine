@@ -596,7 +596,7 @@ func (q *Queries) GetLoanPayment(ctx context.Context) (LoanPayment, error) {
 }
 
 const getLoanTransaction = `-- name: GetLoanTransaction :one
-SELECT id, invoice_number, notes, user_id, user, loan_id, loan, amount, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_transactions` + "`" + `
+SELECT lt.id, lt.invoice_number, lt.notes, lt.user_id, lt.user, lt.loan_id, lt.loan, lt.amount, lt.created_at, lt.created_by, lt.updated_at, lt.updated_by, lt.deleted_at, lt.deleted_by, lt.is_deleted FROM ` + "`" + `loan_transactions` + "`" + ` AS ` + "`" + `lt` + "`" + `
 `
 
 func (q *Queries) GetLoanTransaction(ctx context.Context) (LoanTransaction, error) {
@@ -833,7 +833,7 @@ func (q *Queries) ListLoanPayment(ctx context.Context) ([]LoanPayment, error) {
 }
 
 const listLoanTransaction = `-- name: ListLoanTransaction :many
-SELECT id, invoice_number, notes, user_id, user, loan_id, loan, amount, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by, is_deleted FROM ` + "`" + `loan_transactions` + "`" + `
+SELECT lt.id, lt.invoice_number, lt.notes, lt.user_id, lt.user, lt.loan_id, lt.loan, lt.amount, lt.created_at, lt.created_by, lt.updated_at, lt.updated_by, lt.deleted_at, lt.deleted_by, lt.is_deleted FROM ` + "`" + `loan_transactions` + "`" + ` AS ` + "`" + `lt` + "`" + `
 `
 
 func (q *Queries) ListLoanTransaction(ctx context.Context) ([]LoanTransaction, error) {

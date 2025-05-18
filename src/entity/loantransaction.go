@@ -94,3 +94,8 @@ func (lt *LoanTransaction) GenInvoiceNumber(id int64, userID int64) string {
 	lt.InvoiceNumber = fmt.Sprintf("LOAN/%d/%d", id, userID)
 	return lt.InvoiceNumber
 }
+
+const (
+	LOAN_TRANSACTION_STATUS_PAID   = "paid"
+	LOAN_TRANSACTION_STATUS_UNPAID = "unpaid"
+)

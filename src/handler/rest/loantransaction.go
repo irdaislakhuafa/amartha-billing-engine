@@ -34,3 +34,31 @@ func (r *rest) CalculateOutstandingLoanTransaction(c *fiber.Ctx) error {
 
 	return r.httpResSuccess(c, codes.CodeSuccess, result, nil)
 }
+
+func (r *rest) PayLoanTransaction(c *fiber.Ctx) error {
+	body := entity.PayLoanTransactionParams{}
+	if err := c.BodyParser(&body); err != nil {
+		return r.httpResError(c, errors.NewWithCode(codes.CodeBadRequest, err.Error()))
+	}
+
+	result, err := r.uc.LoanTransaction.Pay(c.UserContext(), body)
+	if err != nil {
+		return r.httpResError(c, err)
+	}
+
+	return r.httpResSuccess(c, codes.CodeSuccess, result, nil)
+}
+
+func (r *rest) ListLoanTransaction(c *fiber.Ctx) error {
+	queries := entity.ListLoanTransactionParams{}
+	if err := c.QueryParser(&queries); err != nil {
+		return r.httpResError(c, errors.NewWithCode(codes.CodeBadRequest, err.Error()))
+	}
+
+	results, pagination, err := r.uc.LoanTransaction.List(c.UserContext(), queries)
+	if err != nil {
+		return r.httpResError(c, err)
+	}
+
+	return r.httpResSuccess(c, codes.CodeSuccess, results, &pagination)
+}

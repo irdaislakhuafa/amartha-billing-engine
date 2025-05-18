@@ -39,18 +39,19 @@ type (
 
 	ListLoanBillingParams struct {
 		PaginationParams
-		LoanTransactionID      int64           `db:"loan_transaction_id" json:"loan_transaction_id" form:"loan_transaction_id" params:"loan_transaction_id" query:"loan_transaction_id" validate:""`
-		IsDeleted              int8            `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted" validate:""`
-		BillDateGTE            time.Time       `db:"bill_date_gte" json:"bill_date_gte" form:"bill_date_gte" params:"bill_date_gte" query:"bill_date_gte" validate:""`
-		BillDateLTE            time.Time       `db:"bill_date_lte" json:"bill_date_lte" form:"bill_date_lte" params:"bill_date_lte" query:"bill_date_lte" validate:""`
-		PrincipalAmountGTE     decimal.Decimal `db:"principal_amount_gte" json:"principal_amount_gte" form:"principal_amount_gte" params:"principal_amount_gte" query:"principal_amount_gte" validate:""`
-		PrincipalAmountLTE     decimal.Decimal `db:"principal_amount_lte" json:"principal_amount_lte" form:"principal_amount_lte" params:"principal_amount_lte" query:"principal_amount_lte" validate:""`
-		PrincipalAmountPaidGTE decimal.Decimal `db:"principal_amount_paid_gte" json:"principal_amount_paid_gte" form:"principal_amount_paid_gte" params:"principal_amount_paid_gte" query:"principal_amount_paid_gte" validate:""`
-		PrincipalAmountPaidLTE decimal.Decimal `db:"principal_amount_paid_lte" json:"principal_amount_paid_lte" form:"principal_amount_paid_lte" params:"principal_amount_paid_lte" query:"principal_amount_paid_lte" validate:""`
-		InterestAmountGTE      decimal.Decimal `db:"interest_amount_gte" json:"interest_amount_gte" form:"interest_amount_gte" params:"interest_amount_gte" query:"interest_amount_gte" validate:""`
-		InterestAmountLTE      decimal.Decimal `db:"interest_amount_lte" json:"interest_amount_lte" form:"interest_amount_lte" params:"interest_amount_lte" query:"interest_amount_lte" validate:""`
-		InterestAmountPaidGTE  decimal.Decimal `db:"interest_amount_paid_gte" json:"interest_amount_paid_gte" form:"interest_amount_paid_gte" params:"interest_amount_paid_gte" query:"interest_amount_paid_gte" validate:""`
-		InterestAmountPaidLTE  decimal.Decimal `db:"interest_amount_paid_lte" json:"interest_amount_paid_lte" form:"interest_amount_paid_lte" params:"interest_amount_paid_lte" query:"interest_amount_paid_lte" validate:""`
+		LoanTransactionID      int64            `db:"loan_transaction_id" json:"loan_transaction_id" form:"loan_transaction_id" params:"loan_transaction_id" query:"loan_transaction_id" validate:""`
+		IsDeleted              int8             `db:"is_deleted" json:"is_deleted" form:"is_deleted" params:"is_deleted" query:"is_deleted" validate:""`
+		BillDateGTE            time.Time        `db:"bill_date_gte" json:"bill_date_gte" form:"bill_date_gte" params:"bill_date_gte" query:"bill_date_gte" validate:""`
+		BillDateLTE            time.Time        `db:"bill_date_lte" json:"bill_date_lte" form:"bill_date_lte" params:"bill_date_lte" query:"bill_date_lte" validate:""`
+		PrincipalAmountGTE     *decimal.Decimal `db:"principal_amount_gte" json:"principal_amount_gte" form:"principal_amount_gte" params:"principal_amount_gte" query:"principal_amount_gte" validate:""`
+		PrincipalAmountLTE     *decimal.Decimal `db:"principal_amount_lte" json:"principal_amount_lte" form:"principal_amount_lte" params:"principal_amount_lte" query:"principal_amount_lte" validate:""`
+		PrincipalAmountPaidGTE *decimal.Decimal `db:"principal_amount_paid_gte" json:"principal_amount_paid_gte" form:"principal_amount_paid_gte" params:"principal_amount_paid_gte" query:"principal_amount_paid_gte" validate:""`
+		PrincipalAmountPaidLTE *decimal.Decimal `db:"principal_amount_paid_lte" json:"principal_amount_paid_lte" form:"principal_amount_paid_lte" params:"principal_amount_paid_lte" query:"principal_amount_paid_lte" validate:""`
+		InterestAmountGTE      *decimal.Decimal `db:"interest_amount_gte" json:"interest_amount_gte" form:"interest_amount_gte" params:"interest_amount_gte" query:"interest_amount_gte" validate:""`
+		InterestAmountLTE      *decimal.Decimal `db:"interest_amount_lte" json:"interest_amount_lte" form:"interest_amount_lte" params:"interest_amount_lte" query:"interest_amount_lte" validate:""`
+		InterestAmountPaidGTE  *decimal.Decimal `db:"interest_amount_paid_gte" json:"interest_amount_paid_gte" form:"interest_amount_paid_gte" params:"interest_amount_paid_gte" query:"interest_amount_paid_gte" validate:""`
+		InterestAmountPaidLTE  *decimal.Decimal `db:"interest_amount_paid_lte" json:"interest_amount_paid_lte" form:"interest_amount_paid_lte" params:"interest_amount_paid_lte" query:"interest_amount_paid_lte" validate:""`
+		UserID                 int64            `db:"user_id" json:"user_id" form:"user_id" params:"user_id" query:"user_id" validate:""`
 	}
 
 	GetLoanPaymentParams struct {

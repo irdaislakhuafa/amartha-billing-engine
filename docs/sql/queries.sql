@@ -86,10 +86,10 @@ INSERT INTO `loan_transactions` (
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetLoanTransaction :one
-SELECT * FROM `loan_transactions`;
+SELECT `lt`.* FROM `loan_transactions` AS `lt`;
 
 -- name: ListLoanTransaction :many
-SELECT * FROM `loan_transactions`;
+SELECT `lt`.* FROM `loan_transactions` AS `lt`;
 
 -- name: CountLoanTransaction :one
 SELECT COUNT(`id`) AS `total` FROM `loan_transactions`;

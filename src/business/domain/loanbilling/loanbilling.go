@@ -149,35 +149,35 @@ func (i *impl) List(ctx context.Context, params entity.ListLoanBillingParams) ([
 			b.And("bill_date <= ?", params.BillDateLTE)
 		}
 
-		if !params.PrincipalAmountGTE.IsZero() {
+		if params.PrincipalAmountGTE != nil {
 			b.And("principal_amount >= ?", params.PrincipalAmountGTE)
 		}
 
-		if !params.PrincipalAmountLTE.IsZero() {
+		if params.PrincipalAmountLTE != nil {
 			b.And("principal_amount <= ?", params.PrincipalAmountLTE)
 		}
 
-		if !params.PrincipalAmountPaidGTE.IsZero() {
+		if params.PrincipalAmountPaidGTE != nil {
 			b.And("principal_amount_paid >= ?", params.PrincipalAmountPaidGTE)
 		}
 
-		if !params.PrincipalAmountPaidLTE.IsZero() {
+		if params.PrincipalAmountPaidLTE != nil {
 			b.And("principal_amount_paid <= ?", params.PrincipalAmountPaidLTE)
 		}
 
-		if !params.InterestAmountGTE.IsZero() {
+		if params.InterestAmountGTE != nil {
 			b.And("interest_amount >= ?", params.InterestAmountGTE)
 		}
 
-		if !params.InterestAmountLTE.IsZero() {
+		if params.InterestAmountLTE != nil {
 			b.And("interest_amount <= ?", params.InterestAmountLTE)
 		}
 
-		if !params.InterestAmountPaidGTE.IsZero() {
+		if params.InterestAmountPaidGTE != nil {
 			b.And("interest_amount_paid >= ?", params.InterestAmountPaidGTE)
 		}
 
-		if !params.InterestAmountPaidLTE.IsZero() {
+		if params.InterestAmountPaidLTE != nil {
 			b.And("interest_amount_paid <= ?", params.InterestAmountPaidLTE)
 		}
 	})

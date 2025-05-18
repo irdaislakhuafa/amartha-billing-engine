@@ -1,0 +1,44 @@
+meta {
+  name: list
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/v1/loan/transactions
+  body: none
+  auth: inherit
+}
+
+docs {
+  # Request
+  ## Body
+  ```json
+  {
+    "message": {
+      "title": "OK",
+      "body": "Request successful"
+    },
+    "meta": {
+      "path": "/api/v1/loan/transaction/calculate/1",
+      "statusCode": 200,
+      "statusStr": "OK",
+      "message": "GET http://127.0.0.1:8001/api/v1/loan/transaction/calculate/1 200 OK",
+      "timestamp": "2025-05-17T22:35:20+07:00",
+      "error": null,
+      "requestId": "acb01d62-4e90-4ce3-b69f-2ab996436b1a"
+    },
+    "data": {
+      "current_bill_date": null,
+      "next_bill_date": "2025-05-24T00:00:00Z",
+      "billed_principal_amount": "0",
+      "billed_interest_amount": "0",
+      "total_billed_amount": "0",
+      "total_paid_amount": "0",
+      "os_principal_amount": "5000000",
+      "os_interest_amount": "500000",
+      "total_os_amount": "5500000"
+    }
+  }
+  ```
+}

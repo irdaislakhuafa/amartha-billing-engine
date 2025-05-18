@@ -1,0 +1,135 @@
+meta {
+  name: pay
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/loan/transaction/pay
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "loan_transaction_id": 8,
+    "amount": 110000,
+    "user_id": 1
+  }
+}
+
+docs {
+  # Request
+  ## Body
+  ```json
+  {
+    "user_id": 1,
+    "loan_id": 1,
+    "amount": 5000000
+  }
+  ```
+  
+  # Response [200]
+  ## Body
+  ```json
+  {
+    "message": {
+      "title": "OK",
+      "body": "Request successful"
+    },
+    "meta": {
+      "path": "/api/v1/loan/transactions",
+      "statusCode": 200,
+      "statusStr": "OK",
+      "message": "POST http://127.0.0.1:8001/api/v1/loan/transactions 200 OK",
+      "timestamp": "2025-05-17T22:01:30+07:00",
+      "error": null,
+      "requestId": "9dd6c117-02d3-41d2-ac40-03c15693af40"
+    },
+    "data": {
+      "invoice_number": "",
+      "notes": "",
+      "user_id": 1,
+      "user": {
+        "name": "Irda Islakhu Afa",
+        "email": "irdaislakhafa.test@gmail.com",
+        "password": "$2a$10$j7rXu/WAH4YuqgmNKtvpO./RjEEWZBuvtdkodaK//KrUQ5AkSRlD6",
+        "delinquent_level": 0,
+        "id": 1,
+        "created_at": "2025-05-17T14:52:31Z",
+        "created_by": "",
+        "updated_at": null,
+        "updated_by": null,
+        "deleted_at": null,
+        "deleted_by": null,
+        "is_deleted": 0
+      },
+      "loan_id": 1,
+      "loan": {
+        "name": "50 Weeks",
+        "description": "Loan with repayment for 50 weeks.",
+        "interest_rate": "10",
+        "repayment_type": "weeks",
+        "repayment_duration": 50,
+        "id": 1,
+        "created_at": "2025-05-17T14:53:25Z",
+        "created_by": "",
+        "updated_at": null,
+        "updated_by": null,
+        "deleted_at": null,
+        "deleted_by": null,
+        "is_deleted": 0
+      },
+      "amount": "5000000",
+      "id": 6,
+      "created_at": "2025-05-17T22:01:30.077460625+07:00",
+      "created_by": "",
+      "updated_at": null,
+      "updated_by": null,
+      "deleted_at": null,
+      "deleted_by": null,
+      "is_deleted": 0,
+      "loan_billing": [
+        {
+          "loan_transaction_id": 6,
+          "bill_date": "2025-05-24T22:01:30.077461993+07:00",
+          "principal_amount": "100000",
+          "principal_amount_paid": "0",
+          "interest_amount": "10000",
+          "interest_amount_paid": "0",
+          "id": 251,
+          "created_at": "2025-05-17T22:01:30.077491456+07:00",
+          "created_by": "",
+          "updated_at": null,
+          "updated_by": null,
+          "deleted_at": null,
+          "deleted_by": null,
+          "is_deleted": 0
+        }, 
+      ]
+  }
+  ```
+  
+  # Response [400]
+  ## Body
+  ```json
+  {
+    "message": {
+      "title": "Bad Request",
+      "body": "Invalid input. Please validate your input."
+    },
+    "meta": {
+      "path": "/api/v1/loan/transactions",
+      "statusCode": 400,
+      "statusStr": "Bad Request",
+      "message": "POST <no value> 400 Bad Request",
+      "timestamp": "2025-05-17T22:08:18+07:00",
+      "error": {
+        "code": 9,
+        "message": "this user is delinquent and cannot process loan transaction!"
+      },
+      "requestId": "69d7ad0d-f21b-4e86-ae6b-5182b2e2a212"
+    }
+  }
+  ```
+}

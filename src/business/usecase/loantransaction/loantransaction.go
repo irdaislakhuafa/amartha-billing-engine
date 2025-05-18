@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -14,6 +13,7 @@ import (
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/errmessages"
 	"github.com/irdaislakhuafa/amartha-billing-engine/src/utils/validation"
 	"github.com/irdaislakhuafa/go-sdk/codes"
+	"github.com/irdaislakhuafa/go-sdk/convert"
 	"github.com/irdaislakhuafa/go-sdk/errors"
 	"github.com/irdaislakhuafa/go-sdk/log"
 	"github.com/shopspring/decimal"
@@ -28,7 +28,6 @@ type (
 		Delete(ctx context.Context, params entity.DeleteLoanTransactionParams) (entity.LoanTransaction, error)
 		CalculateOutstanding(ctx context.Context, params entity.CalculateOutstandingLoanTransactionParams) (entity.CalculateOutstandingLoanTransaction, error)
 		Pay(ctx context.Context, params entity.PayLoanTransactionParams) (entity.LoanTransaction, error)
-		WithTx(ctx context.Context, tx *sql.Tx) Interface
 	}
 
 	impl struct {
@@ -144,6 +143,21 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 	if err != nil {
 		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 	}
+	result.InvoiceNumber = result.GenInvoiceNumber(result.ID, result.UserID)
+
+	_, err = dLoanTransaction.Update(ctx, entity.UpdateLoanTransactionParams{
+		InvoiceNumber: result.InvoiceNumber,
+		Notes:         result.Notes,
+		UserID:        result.UserID,
+		User:          result.User,
+		LoanID:        result.LoanID,
+		Loan:          result.Loan,
+		Amount:        result.Amount.InexactFloat64(),
+		ID:            result.ID,
+	})
+	if err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
 
 	// generate loan billing
 	listBilling := []entity.LoanBilling{}
@@ -194,9 +208,9 @@ func (i *impl) Create(ctx context.Context, params entity.CreateLoanTransactionPa
 	}
 
 	// commit tx
-	if err := tx.Commit(); err != nil {
-		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
-	}
+	// if err := tx.Commit(); err != nil {
+	// 	return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
+	// }
 
 	result.LoanBilling = createdBillings
 	return result, nil
@@ -292,6 +306,24 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
 	}
 
+	// get setting
+	setting, err := i.dom.Setting.Get(ctx, entity.GetSettingParams{
+		Name:      entity.SETTING_NAME_EOD_DATE,
+		IsDeleted: 0,
+	})
+	if err != nil {
+		code := errors.GetCode(err)
+		if code.IsOneOf(codes.CodeSQLRecordDoesNotExist) {
+			return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_NOT_FOUND)
+		}
+		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	EOD_DATE, err := time.Parse(time.DateOnly, setting.Value)
+	if err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.SETTING_EOD_DATE_INVALID)
+	}
+
 	// get loan transaction
 	lt, err := i.dom.LoanTransaction.Get(ctx, entity.GetLoanTransactionParams{
 		ID: params.LoanTransactionID,
@@ -314,12 +346,17 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 			OrderType: "desc",
 		},
 		IsDeleted:              0,
-		BillDateLTE:            time.Now(),
-		PrincipalAmountPaidLTE: decimal.NewFromInt(0),
-		InterestAmountPaidLTE:  decimal.NewFromInt(0),
+		UserID:                 params.UserID,
+		BillDateLTE:            EOD_DATE,
+		PrincipalAmountPaidLTE: convert.ToPointer(decimal.NewFromInt(0)),
+		InterestAmountPaidLTE:  convert.ToPointer(decimal.NewFromInt(0)),
 	})
 	if err != nil {
 		return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	if len(billings) == 0 {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.LOAN_BILLING_NOT_FOUND)
 	}
 
 	tx, err := i.db.BeginTx(ctx, &sql.TxOptions{})
@@ -332,21 +369,41 @@ func (i *impl) Pay(ctx context.Context, params entity.PayLoanTransactionParams) 
 
 	// calculate amount
 	amount := decimal.NewFromFloat(params.Amount)
-	for _, b := range billings {
+	for i := range billings {
+		b := billings[i]
 		if amount.LessThanOrEqual(decimal.NewFromInt(0)) {
 			break
 		}
 		amount = amount.Sub(b.PrincipalAmount).Sub(b.InterestAmount)
+		b.PrincipalAmountPaid = b.PrincipalAmount
+		b.InterestAmountPaid = b.InterestAmount
+		_, err := dLoanBilling.Update(ctx, entity.UpdateLoanBillingParams{
+			LoanTransactionID:   b.LoanTransactionID,
+			BillDate:            b.BillDate,
+			PrincipalAmount:     b.PrincipalAmount,
+			PrincipalAmountPaid: b.PrincipalAmountPaid,
+			InterestAmount:      b.InterestAmount,
+			InterestAmountPaid:  b.InterestAmountPaid,
+			ID:                  b.ID,
+		})
+		if err != nil {
+			return entity.LoanTransaction{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+		}
+		billings[i] = b
 	}
 
-	// if amount not match then throw error
+	// if amount not match then return error
 	if !amount.Equal(decimal.NewFromInt(0)) {
 		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeBadRequest, errmessages.TRANSACTION_AMOUNT_NOT_MATCH)
 	}
 
-	fmt.Printf("dLoanBilling: %v\n", dLoanBilling)
-	fmt.Printf("lt: %v\n", lt)
-	return entity.LoanTransaction{}, nil
+	// commit tx
+	if err := tx.Commit(); err != nil {
+		return entity.LoanTransaction{}, errors.NewWithCode(codes.CodeSQLTxCommit, err.Error())
+	}
+
+	lt.LoanBilling = billings
+	return lt, nil
 
 }
 
@@ -362,15 +419,20 @@ func (i *impl) Get(ctx context.Context, params entity.GetLoanTransactionParams) 
 
 // List implements Interface.
 func (i *impl) List(ctx context.Context, params entity.ListLoanTransactionParams) ([]entity.LoanTransaction, entity.Pagination, error) {
-	panic("unimplemented")
+	if err := i.val.StructCtx(ctx, params); err != nil {
+		err = validation.ExtractError(err, params)
+		return []entity.LoanTransaction{}, entity.Pagination{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	results, pagination, err := i.dom.LoanTransaction.List(ctx, params)
+	if err != nil {
+		return []entity.LoanTransaction{}, entity.Pagination{}, errors.NewWithCode(errors.GetCode(err), err.Error())
+	}
+
+	return results, pagination, nil
 }
 
 // Update implements Interface.
 func (i *impl) Update(ctx context.Context, params entity.UpdateLoanTransactionParams) (entity.LoanTransaction, error) {
-	panic("unimplemented")
-}
-
-// WithTx implements Interface.
-func (i *impl) WithTx(ctx context.Context, tx *sql.Tx) Interface {
 	panic("unimplemented")
 }
