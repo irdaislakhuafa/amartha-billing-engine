@@ -3,6 +3,11 @@ This is Amartha Billing Engine that provide billing services for loaning. This p
 
 This project is built with my SDK for Go Development [go-sdk](https://github.com/irdaislakhuafa/go-sdk) and started at 17 May 2025 after i answer the email ![alt text](image.png).
 
+## LIMITATION
+Because i have limited time, i can't implement all features that i want to implement. Here is the limitation:
+- User can only have 1 loan transaction until user pay it full
+- User can't have 2 loan transaction at the same time
+
 ## Usages
 This app use docker as container so it's easy to deploy, you don't need to configure anything if you already have docker installed in your machine.
 
@@ -17,6 +22,9 @@ Then wait until app is ready.
 - Get Outstanding: `GET /api/v1/loan/transaction/calculate/:user_id`
 - Is Delinquent: `GET /api/v1/users/:id`. Users have flag `deliquent_level` to identify they are delinquent or not.
 - Make Payment: `POST /api/v1/loan/transaction/pay`
+
+Scheduler that update `delinquent_level` will run every day at 00:00:00. But if you want to trigger the scheduller manually you can hit API below
+- Scheduler Delinquent: `POST /api/v1/loan/transaction/schedule-delinquent`
 
 You can see full API docs in `docs/rest/Amartha Billing` directory. You can use [bruno](https://www.usebruno.com/) to open it. [Bruno](https://www.usebruno.com/) is a Postman alternative that fully free and open source.
 
